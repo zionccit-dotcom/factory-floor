@@ -1,5 +1,7 @@
 # Factory Floor
 
+![Factory Floor analyzing an Azure Data Factory pipeline](docs/screenshot.png)
+
 A browser-based static analyzer for **Azure Data Factory pipeline JSON** and **Power BI DAX measures**.
 
 Paste a pipeline definition or a measure, and Factory Floor reports the defects it finds — each one
@@ -22,6 +24,19 @@ Factory Floor runs **31 rules** across two analyzers:
 Findings are graded **critical**, **warning**, or **advisory**, and grouped by category
 (correctness, performance, secrets, resilience, structure, concurrency, portability, clarity,
 robustness, governance).
+
+---
+
+## How it works
+
+- **A deterministic rule set, not a model.** Each rule is hand-written logic that walks the
+  parsed structure and fires on conditions decidable from that structure alone. The same input
+  always produces the same findings — nothing is sampled, ranked, or inferred.
+- **Every rule cites Microsoft documentation.** A finding links to the Microsoft Learn page that
+  documents the behaviour it is based on, so you can check the rule rather than take its word.
+- **One self-contained HTML file.** No build step, no dependencies, no backend. The analysis runs
+  in your browser and your pipeline definitions never leave it — the only request the page makes
+  is for a web font stylesheet.
 
 ---
 
