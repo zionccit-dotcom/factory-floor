@@ -83,6 +83,26 @@ robustness, governance).
 | DAX-013 | advisory | performance | `DISTINCTCOUNT` on a fact column |
 | DAX-014 | advisory | clarity | `ALL` used as a filter modifier |
 
+### Suppressing a finding
+
+A rule can be right in general and wrong for one activity. An activity opts out of a rule with a
+`userProperties` entry — ADF-native, so it survives a Studio round-trip and shows in monitoring:
+
+```json
+"userProperties": [
+  {
+    "name": "factory-floor-ignore",
+    "value": "ADF-017: wake-up is best-effort; the copy fails on its own if the database is down"
+  }
+]
+```
+
+The value is a comma-separated list of rule IDs, optionally followed by `: reason`. The opt-out
+applies only to findings on that activity.
+
+**Suppressed findings are not discarded.** They are returned separately and counted in the results
+header, so an opt-out stays auditable instead of quietly shrinking the report.
+
 Every finding links out to the Microsoft Learn page that documents the underlying behaviour —
 ForEach concurrency limits, the Lookup activity's 5,000-row ceiling, Key Vault–backed linked
 services, `DIVIDE` semantics, filter-argument evaluation in `CALCULATE`, and so on.

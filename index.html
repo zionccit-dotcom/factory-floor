@@ -1165,7 +1165,48 @@
         "Add a <code>folder.name</code> and annotations for domain, layer and owner."));
     }
 
-    return { findings: out, subject: pipelineName, unit: "activities", unitCount: flat.length };
+    /* --- inline suppressions ---
+       An activity opts out of a rule with a userProperties entry:
+         { "name": "factory-floor-ignore", "value": "ADF-017: why this edge is deliberate" }
+       The value is a comma-separated list of rule ids, optionally followed by ": reason".
+       Suppressed findings are never dropped silently — they are returned separately and
+       reported in the UI, so an opt-out stays auditable rather than invisible. */
+    var suppressions = {};
+    flat.forEach(function (e) {
+      var ups = e.act && e.act.userProperties;
+      if (!Array.isArray(ups)) return;
+      ups.forEach(function (u) {
+        if (!u || String(u.name).toLowerCase() !== "factory-floor-ignore") return;
+        var v = String(u.value == null ? "" : u.value);
+        var cut = v.indexOf(":");
+        var reason = cut > -1 ? v.slice(cut + 1).trim() : "";
+        (cut > -1 ? v.slice(0, cut) : v).split(",").forEach(function (id) {
+          id = id.trim().toUpperCase();
+          if (!/^(ADF|DAX)-\d{3}$/.test(id)) return;
+          if (!suppressions[e.path]) suppressions[e.path] = {};
+          suppressions[e.path][id] = reason || "(no reason given)";
+        });
+      });
+    });
+
+    var suppressed = [];
+    var supPaths = Object.keys(suppressions);
+    if (supPaths.length) {
+      out = out.filter(function (f) {
+        for (var i = 0; i < supPaths.length; i++) {
+          var p = supPaths[i];
+          /* anchor on a path boundary so activities[1] does not swallow activities[10] */
+          var atPath = f.loc === p || f.loc.indexOf(p + ".") === 0 || f.loc.indexOf(p + " ") === 0;
+          if (atPath && suppressions[p][f.id]) {
+            suppressed.push({ id: f.id, sev: f.sev, title: f.title, loc: f.loc, reason: suppressions[p][f.id] });
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    return { findings: out, suppressed: suppressed, subject: pipelineName, unit: "activities", unitCount: flat.length };
   }
 
   /* =====================================================================
@@ -1778,7 +1819,9 @@
       return (SEV_ORDER[a.sev] - SEV_ORDER[b.sev]) || a.id.localeCompare(b.id);
     });
 
-    els.resNote.textContent = visible.length + " of " + state.findings.length + " shown";
+    var nSup = (state.meta && state.meta.suppressed) ? state.meta.suppressed.length : 0;
+    els.resNote.textContent = visible.length + " of " + state.findings.length + " shown" +
+      (nSup ? " · " + nSup + " suppressed" : "");
 
     if (!state.findings.length) {
       els.findings.innerHTML =
