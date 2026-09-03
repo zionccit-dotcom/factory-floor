@@ -11,9 +11,9 @@ tied to a rule ID, a severity, and a link to the Microsoft documentation that ba
 
 ## What it does
 
-Factory Floor runs **30 rules** across two analyzers:
+Factory Floor runs **31 rules** across two analyzers:
 
-- **16 Data Factory rules** (`ADF-001` … `ADF-016`) — parse a pipeline's activity graph and check it
+- **17 Data Factory rules** (`ADF-001` … `ADF-017`) — parse a pipeline's activity graph and check it
   for resilience gaps, hard-coded secrets, ForEach concurrency hazards, broken `dependsOn` references,
   and governance omissions.
 - **14 DAX rules** (`DAX-001` … `DAX-014`) — read a measure expression and check it for correctness
@@ -27,7 +27,7 @@ robustness, governance).
 
 ## The rules
 
-### Data Factory — 16 rules
+### Data Factory — 17 rules
 
 | ID | Severity | Category | Rule |
 |----|----------|----------|------|
@@ -47,6 +47,7 @@ robustness, governance).
 | ADF-014 | advisory | portability | Hard-coded date literal |
 | ADF-015 | warning | secrets | SQL text assembled by string concatenation |
 | ADF-016 | advisory | governance | Pipeline has no folder or annotations |
+| ADF-017 | critical | correctness | `Completed` dependency masks upstream failure |
 
 ### DAX — 14 rules
 

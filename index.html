@@ -617,8 +617,8 @@
       </p>
     </div>
     <div class="plate-meta">
-      <div><b>30</b> rules</div>
-      <div><b>16</b> pipeline</div>
+      <div><b>31</b> rules</div>
+      <div><b>17</b> pipeline</div>
       <div><b>14</b> dax</div>
       <div>runs <b>in-browser</b></div>
     </div>
@@ -714,6 +714,7 @@
     lookup: ["Lookup activity — supported capabilities", "https://learn.microsoft.com/azure/data-factory/control-flow-lookup-activity"],
     cicd: ["CI/CD best practices for Data Factory", "https://learn.microsoft.com/azure/data-factory/continuous-integration-delivery"],
     security: ["Security considerations for data movement", "https://learn.microsoft.com/azure/data-factory/data-movement-security-considerations"],
+    depends: ["Activity dependency — Succeeded, Failed, Skipped, Completed", "https://learn.microsoft.com/azure/data-factory/concepts-pipelines-activities#activity-dependency"],
     divide: ["DIVIDE function vs. divide operator", "https://learn.microsoft.com/dax/best-practices/dax-divide-function-operator"],
     errfn: ["Appropriate use of error functions", "https://learn.microsoft.com/dax/best-practices/dax-error-functions"],
     countrows: ["Use COUNTROWS instead of COUNT", "https://learn.microsoft.com/dax/best-practices/dax-countrows"],
@@ -741,6 +742,7 @@
     "ADF-014": { sev: "advisory", cat: "portability", title: "Hard-coded date literal",              doc: "cicd" },
     "ADF-015": { sev: "warning",  cat: "secrets",     title: "SQL text assembled by string concatenation", doc: "security" },
     "ADF-016": { sev: "advisory", cat: "governance",  title: "Pipeline has no folder or annotations", doc: "cicd" },
+    "ADF-017": { sev: "critical", cat: "correctness", title: "\"Completed\" dependency masks upstream failure", doc: "depends" },
 
     "DAX-001": { sev: "warning",  cat: "correctness", title: "Division by an expression without DIVIDE", doc: "divide" },
     "DAX-002": { sev: "warning",  cat: "performance", title: "IFERROR or ISERROR masks the defect",   doc: "errfn" },
@@ -1074,6 +1076,47 @@
         }
       });
     }
+
+    /* --- ADF-017 — "Completed" dependency masks upstream failure ---
+       "Completed" fires when the upstream activity finished as either Succeeded OR Failed.
+       That is legitimate when the pipeline reacts to that activity's failure somewhere else.
+       It is a defect when nothing does: the run continues past a failed step and reports
+       success. Scoped per dependency scope so nested containers are evaluated separately. */
+    var scopes = {};
+    flat.forEach(function (e) {
+      var m = e.path.match(/^(.*)activities\[\d+\]$/);
+      (scopes[m ? m[1] : ""] = scopes[m ? m[1] : ""] || []).push(e);
+    });
+    Object.keys(scopes).forEach(function (key) {
+      var peers = scopes[key];
+      /* activity names whose failure is handled by an explicit "Failed" edge in this scope */
+      var handled = {};
+      peers.forEach(function (p) {
+        (Array.isArray(p.act.dependsOn) ? p.act.dependsOn : []).forEach(function (d) {
+          var cs = (d && d.dependencyConditions) || [];
+          for (var i = 0; i < cs.length; i++) {
+            if (String(cs[i]).toLowerCase() === "failed" && d.activity) handled[d.activity] = true;
+          }
+        });
+      });
+      peers.forEach(function (e) {
+        var lbl = e.act.name || "(unnamed)";
+        (Array.isArray(e.act.dependsOn) ? e.act.dependsOn : []).forEach(function (d) {
+          var cs = (d && d.dependencyConditions) || [];
+          var hasCompleted = cs.some(function (c) { return String(c).toLowerCase() === "completed"; });
+          var hasSucceeded = cs.some(function (c) { return String(c).toLowerCase() === "succeeded"; });
+          if (!hasCompleted || hasSucceeded) return;
+          if (!d.activity || handled[d.activity]) return;
+          out.push(finding("ADF-017",
+            e.path + ".dependsOn — \"" + lbl + "\" after \"" + d.activity + "\"",
+            '"dependencyConditions": ' + JSON.stringify(cs),
+            "\"Completed\" runs " + JSON.stringify(lbl) + " whether " + JSON.stringify(d.activity) +
+              " succeeded or failed, and no activity in this scope reacts to that failure. A failed upstream step " +
+              "does not stop the run: the downstream work proceeds on stale or missing data and the pipeline still reports success.",
+            "Change the condition to <code>Succeeded</code> if the step is a real precondition, or add a <code>Failed</code> branch that records the outcome or raises an alert."));
+        });
+      });
+    });
 
     /* --- ADF-009 — no failure path anywhere --- */
     if (!sawFailureDependency && flat.length > 1) {
