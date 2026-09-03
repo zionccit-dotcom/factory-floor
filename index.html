@@ -828,7 +828,7 @@
   /* Audits one pipeline document. factorySize is the number of pipelines the
      caller can actually see, or null when that is unknown. A rule making a
      factory-scale claim must not fire on a guess. */
-  function auditPipeline(root, factorySize) {
+  function auditPipeline(root, factorySize, calleeNames) {
     var props = (root && root.properties) ? root.properties : root;
     var pipelineName = (root && root.name) || (props && props.name) || "pipeline";
     var activities = (props && props.activities) || (root && root.activities);
@@ -1118,12 +1118,25 @@
       });
     });
 
-    /* --- ADF-009 — no failure path anywhere --- */
-    if (!sawFailureDependency && flat.length > 1) {
+    /* --- ADF-009 — no failure path anywhere ---
+       Only meaningful when nobody else handles this pipeline's failures. A child
+       pipeline invoked by an orchestrator already reports failure to its caller,
+       and demanding a Failed branch in every leaf pushes error handling to the
+       wrong layer. calleeNames is supplied in factory mode; in single-pipeline
+       mode it is null and the finding says so rather than implying otherwise. */
+    var isCallee = !!(calleeNames && calleeNames[pipelineName]);
+    if (!sawFailureDependency && flat.length > 1 && !isCallee) {
+      var d009 = "No activity in this pipeline reacts to a failure. When a step fails the run stops " +
+        "where it stopped: no compensating write, no status row, no notification — only whatever the " +
+        "monitoring view shows.";
+      if (!calleeNames) {
+        d009 += " This pipeline was audited on its own, so whether a parent pipeline handles the failure " +
+          "for it is not visible here — audit the factory together to settle that.";
+      }
       out.push(finding("ADF-009",
         "activities[] — pipeline \"" + pipelineName + "\"",
         "(no dependencyConditions containing \"Failed\")",
-        "No activity in this pipeline reacts to a failure. When a step fails the run stops where it stopped: no compensating write, no status row, no notification — only whatever the monitoring view shows.",
+        d009,
         "Add a failure branch (<code>dependencyConditions: [\"Failed\"]</code>) that records the outcome or raises an alert."));
     }
 
@@ -1247,12 +1260,24 @@
       });
     }
 
-    if (!docs) return auditPipeline(root, null);
+    if (!docs) return auditPipeline(root, null, null);
+
+    /* Which pipelines are invoked by another pipeline in this set. Scans for any
+       PipelineReference, so references nested inside ForEach/If are included. */
+    var callees = Object.create(null);
+    (function collect(node) {
+      if (!node || typeof node !== "object") return;
+      if (Array.isArray(node)) { node.forEach(collect); return; }
+      if (node.type === "PipelineReference" && typeof node.referenceName === "string") {
+        callees[node.referenceName] = true;
+      }
+      Object.keys(node).forEach(function (k) { collect(node[k]); });
+    })(docs);
 
     var size = docs.length;
     var all = [], sup = [], units = 0;
     for (var i = 0; i < size; i++) {
-      var r = auditPipeline(docs[i], size);
+      var r = auditPipeline(docs[i], size, callees);
       if (r.parseError) {
         return { parseError: "Pipeline " + (i + 1) + " of " + size + ": " + r.parseError };
       }

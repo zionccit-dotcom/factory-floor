@@ -54,7 +54,7 @@ robustness, governance).
 | ADF-006 | advisory | concurrency | Parallel ForEach with no batchCount |
 | ADF-007 | critical | correctness | ForEach nested inside another ForEach |
 | ADF-008 | warning | correctness | Lookup returns all rows — silent truncation at 5,000 |
-| ADF-009 | warning | resilience | Pipeline has no failure path |
+| ADF-009 | warning | resilience | Pipeline has no failure path (skipped for pipelines a caller handles) |
 | ADF-010 | warning | secrets | Activity handling credentials is not marked secure |
 | ADF-011 | critical | structure | `dependsOn` names an activity that does not exist |
 | ADF-012 | critical | structure | Duplicate activity name |
@@ -98,6 +98,12 @@ shapes are accepted:
 
 With an array or ARM template, findings are labelled by pipeline (`PL_Gold › activities[0].policy …`)
 and ARM's `[concat(parameters('factoryName'), '/PL_Gold')]` names are resolved back to `PL_Gold`.
+
+Two rules use this. **ADF-016** fires only when the factory is known to hold more than 10
+pipelines. **ADF-009** ("no failure path") is skipped for any pipeline invoked by another pipeline
+in the set — a child reports its failure to the orchestrator that called it, and demanding a
+`Failed` branch in every leaf pushes error handling to the wrong layer. Audited on its own, a
+pipeline cannot see its callers, so ADF-009 still fires there and says so in the finding.
 
 **ADF-016 fires only when the factory is known to hold more than 10 pipelines.** Given one pipeline
 the size is unknown, so it stays silent instead of reporting a governance gap it cannot actually
