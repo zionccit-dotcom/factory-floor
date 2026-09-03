@@ -821,14 +821,14 @@
     return clone;
   }
 
-  function auditADF(text) {
-    var root;
-    try {
-      root = JSON.parse(text);
-    } catch (e) {
-      return { parseError: "The source is not valid JSON. " + e.message };
-    }
+  /* How many pipelines must a factory hold before folders and annotations earn
+     their keep. Only ADF-016 consults it. */
+  var GOVERNANCE_PIPELINE_THRESHOLD = 10;
 
+  /* Audits one pipeline document. factorySize is the number of pipelines the
+     caller can actually see, or null when that is unknown. A rule making a
+     factory-scale claim must not fire on a guess. */
+  function auditPipeline(root, factorySize) {
     var props = (root && root.properties) ? root.properties : root;
     var pipelineName = (root && root.name) || (props && props.name) || "pipeline";
     var activities = (props && props.activities) || (root && root.activities);
@@ -1154,14 +1154,21 @@
       });
     })(root, "");
 
-    /* --- ADF-016 — governance metadata --- */
+    /* --- ADF-016 — governance metadata ---
+       Folders and annotations exist to keep a large factory navigable, so the
+       finding only means anything once the factory is actually large. That is
+       not knowable from a single pipeline document: in single-pipeline mode
+       factorySize is null and this rule stays silent rather than guess. Supply
+       an array of pipelines or an exported ARM template to evaluate it. */
     var folder = (root && root.folder) || (props && props.folder);
     var annotations = (props && props.annotations) || (root && root.annotations);
-    if (!folder && (!annotations || !annotations.length)) {
+    if (factorySize !== null && factorySize > GOVERNANCE_PIPELINE_THRESHOLD &&
+        !folder && (!annotations || !annotations.length)) {
       out.push(finding("ADF-016",
         "properties — pipeline \"" + pipelineName + "\"",
-        "(no folder, no annotations)",
-        "The pipeline carries no folder and no annotations, so it cannot be grouped in the authoring tree or filtered in monitoring once the factory holds more than a handful of pipelines.",
+        "(no folder, no annotations; " + factorySize + " pipelines in the factory)",
+        "The pipeline carries no folder and no annotations. With " + factorySize +
+          " pipelines in this factory it cannot be grouped in the authoring tree or filtered in monitoring.",
         "Add a <code>folder.name</code> and annotations for domain, layer and owner."));
     }
 
@@ -1207,6 +1214,58 @@
     }
 
     return { findings: out, suppressed: suppressed, subject: pipelineName, unit: "activities", unitCount: flat.length };
+  }
+
+  /* Entry point. Accepts a single pipeline, an array of pipelines, or an
+     exported ARM template, so rules that depend on factory size have something
+     real to test instead of an assumption. */
+  function auditADF(text) {
+    var root;
+    try {
+      root = JSON.parse(text);
+    } catch (e) {
+      return { parseError: "The source is not valid JSON. " + e.message };
+    }
+
+    var docs = null;
+    if (Array.isArray(root)) {
+      docs = root;
+      if (!docs.length) return { parseError: "The array is empty — no pipelines to audit." };
+    } else if (root && Array.isArray(root.resources)) {
+      docs = root.resources.filter(function (r) {
+        return r && typeof r.type === "string" && /factories\/pipelines$/i.test(r.type);
+      });
+      if (!docs.length) {
+        return { parseError: 'This looks like an ARM template, but it holds no "Microsoft.DataFactory/factories/pipelines" resources.' };
+      }
+      /* ARM names arrive as [concat(parameters('factoryName'), '/PL_Name')] */
+      docs.forEach(function (r) {
+        if (r && typeof r.name === "string") {
+          var m = r.name.match(/'\/([^']+)'\s*\)\s*\]\s*$/);
+          if (m) r.name = m[1];
+        }
+      });
+    }
+
+    if (!docs) return auditPipeline(root, null);
+
+    var size = docs.length;
+    var all = [], sup = [], units = 0;
+    for (var i = 0; i < size; i++) {
+      var r = auditPipeline(docs[i], size);
+      if (r.parseError) {
+        return { parseError: "Pipeline " + (i + 1) + " of " + size + ": " + r.parseError };
+      }
+      var label = r.subject;
+      r.findings.forEach(function (f) { f.loc = label + " › " + f.loc; all.push(f); });
+      r.suppressed.forEach(function (f) { f.loc = label + " › " + f.loc; sup.push(f); });
+      units += r.unitCount;
+    }
+    return {
+      findings: all, suppressed: sup,
+      subject: size + " pipelines", unit: "activities",
+      unitCount: units, pipelineCount: size
+    };
   }
 
   /* =====================================================================
@@ -1756,7 +1815,8 @@
 
     var c = severityCounts(state.findings);
     var total = state.findings.length;
-    var unit = state.meta.unitCount + " " + state.meta.unit;
+    var unit = state.meta.unitCount + " " + state.meta.unit +
+      (state.meta.pipelineCount ? " in " + state.meta.pipelineCount + " pipelines" : "");
 
     if (total === 0) {
       els.scorecard.innerHTML =

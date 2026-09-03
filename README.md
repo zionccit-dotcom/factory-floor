@@ -61,7 +61,7 @@ robustness, governance).
 | ADF-013 | advisory | structure | Activity has no dependency and starts immediately |
 | ADF-014 | advisory | portability | Hard-coded date literal |
 | ADF-015 | warning | secrets | SQL text assembled by string concatenation |
-| ADF-016 | advisory | governance | Pipeline has no folder or annotations |
+| ADF-016 | advisory | governance | Pipeline has no folder or annotations (factory-scale only) |
 | ADF-017 | critical | correctness | `Completed` dependency masks upstream failure |
 
 ### DAX — 14 rules
@@ -82,6 +82,27 @@ robustness, governance).
 | DAX-012 | advisory | clarity | `CALCULATE` nested three deep |
 | DAX-013 | advisory | performance | `DISTINCTCOUNT` on a fact column |
 | DAX-014 | advisory | clarity | `ALL` used as a filter modifier |
+
+### Auditing a whole factory
+
+Most rules are decidable from a single pipeline. A few are not: **ADF-016** asks whether a pipeline
+can still be found among its neighbours, which is meaningless without knowing how many neighbours
+there are. Rather than guess, the analyzer takes the whole factory when you have it. Three input
+shapes are accepted:
+
+| Input | Factory size |
+|-------|--------------|
+| One pipeline object | unknown |
+| An array of pipeline objects | array length |
+| An exported ARM template (`resources[]`) | count of `factories/pipelines` resources |
+
+With an array or ARM template, findings are labelled by pipeline (`PL_Gold › activities[0].policy …`)
+and ARM's `[concat(parameters('factoryName'), '/PL_Gold')]` names are resolved back to `PL_Gold`.
+
+**ADF-016 fires only when the factory is known to hold more than 10 pipelines.** Given one pipeline
+the size is unknown, so it stays silent instead of reporting a governance gap it cannot actually
+observe. A rule that cannot test its own precondition should not fire on the assumption that it
+holds.
 
 ### Suppressing a finding
 
