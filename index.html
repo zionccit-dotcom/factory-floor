@@ -1,0 +1,1876 @@
+<title>Factory Floor</title>
+
+<style>
+  :root {
+    --ground: #EDF0EE;
+    --surface: #FFFFFF;
+    --surface-sunk: #E4E9E6;
+    --ink: #141F1D;
+    --ink-2: #4E5F5C;
+    --ink-3: #7C8C89;
+    --hairline: #D3DAD7;
+    --hairline-strong: #B9C3C0;
+    --accent: #0D5C5C;
+    --accent-soft: #E0EBEA;
+    --on-accent: #FFFFFF;
+    --sev-critical: #A8323F;
+    --sev-critical-soft: #F6E4E6;
+    --sev-warning: #966010;
+    --sev-warning-soft: #F7EBD9;
+    --sev-advisory: #3D5F7D;
+    --sev-advisory-soft: #E4ECF3;
+    --sev-clean: #2C6549;
+    --sev-clean-soft: #E2EFE7;
+
+    --display: "Bricolage Grotesque", "Archivo", ui-sans-serif, system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+    --body: "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --max: 1440px;
+    --r-sm: 3px;
+    --r-md: 6px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0E1413;
+      --surface: #161E1C;
+      --surface-sunk: #101716;
+      --ink: #E7EEEC;
+      --ink-2: #A0B0AD;
+      --ink-3: #7A8A87;
+      --hairline: #26322F;
+      --hairline-strong: #35443F;
+      --accent: #4FB3AC;
+      --accent-soft: #16302E;
+      --on-accent: #06201F;
+      --sev-critical: #E8808C;
+      --sev-critical-soft: #33191D;
+      --sev-warning: #DCA646;
+      --sev-warning-soft: #2E2413;
+      --sev-advisory: #8FB4D2;
+      --sev-advisory-soft: #17242E;
+      --sev-clean: #6DBB93;
+      --sev-clean-soft: #16281F;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0E1413;
+    --surface: #161E1C;
+    --surface-sunk: #101716;
+    --ink: #E7EEEC;
+    --ink-2: #A0B0AD;
+    --ink-3: #7A8A87;
+    --hairline: #26322F;
+    --hairline-strong: #35443F;
+    --accent: #4FB3AC;
+    --accent-soft: #16302E;
+    --on-accent: #06201F;
+    --sev-critical: #E8808C;
+    --sev-critical-soft: #33191D;
+    --sev-warning: #DCA646;
+    --sev-warning-soft: #2E2413;
+    --sev-advisory: #8FB4D2;
+    --sev-advisory-soft: #17242E;
+    --sev-clean: #6DBB93;
+    --sev-clean-soft: #16281F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 24px 72px;
+  }
+
+  /* ---------- header : spec-sheet plate ---------- */
+
+  .plate {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 24px 40px;
+    align-items: end;
+    padding: 30px 0 18px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .wordmark {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(34px, 5.4vw, 60px);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .wordmark .mk { color: var(--accent); }
+
+  .standfirst {
+    margin: 10px 0 0;
+    max-width: 58ch;
+    color: var(--ink-2);
+    font-size: 15px;
+  }
+
+  .plate-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: var(--ink-2);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+  }
+  .plate-meta div {
+    padding: 7px 13px;
+    border-right: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+  .plate-meta div:last-child { border-right: 0; }
+  .plate-meta b {
+    color: var(--ink);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- toolbar ---------- */
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+  }
+  .seg button {
+    appearance: none;
+    border: 0;
+    background: var(--surface);
+    color: var(--ink-2);
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-right: 1px solid var(--hairline-strong);
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-selected="true"] {
+    background: var(--ink);
+    color: var(--ground);
+  }
+  .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .tool-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .btn {
+    appearance: none;
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--hairline-strong);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .btn:hover { border-color: var(--ink-3); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  .btn-primary:hover { filter: brightness(1.08); border-color: var(--accent); }
+  .btn-ghost { background: transparent; border-color: var(--hairline); color: var(--ink-2); }
+
+  .spacer { flex: 1 1 auto; }
+
+  /* ---------- workbench ---------- */
+
+  .bench {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 28px;
+    padding-top: 24px;
+    align-items: start;
+  }
+  @media (min-width: 1041px) {
+    .bench > section:first-child {
+      position: sticky;
+      top: 16px;
+    }
+  }
+  @media (max-width: 1040px) {
+    .bench { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .pane-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .pane-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .pane-note {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .editor-wrap {
+    position: relative;
+    background: var(--surface-sunk);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+  }
+  textarea#source {
+    display: block;
+    width: 100%;
+    min-height: 460px;
+    resize: vertical;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    padding: 16px 18px;
+    border-radius: var(--r-md);
+    tab-size: 2;
+  }
+  textarea#source:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  textarea#source::placeholder { color: var(--ink-3); }
+
+  .privacy {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 12px;
+    padding: 11px 13px;
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 0 var(--r-sm) var(--r-sm) 0;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+  .privacy b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- scorecard ---------- */
+
+  .scorecard {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    padding: 16px 18px 14px;
+    margin-bottom: 18px;
+  }
+  .verdict {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .verdict-figure {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .verdict-text { color: var(--ink-2); font-size: 13.5px; }
+  .verdict-text b { color: var(--ink); font-weight: 600; }
+
+  .meter {
+    display: flex;
+    height: 9px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--surface-sunk);
+    margin-bottom: 12px;
+  }
+  .meter span { display: block; height: 100%; }
+  .meter .m-critical { background: var(--sev-critical); }
+  .meter .m-warning { background: var(--sev-warning); }
+  .meter .m-advisory { background: var(--sev-advisory); }
+  .meter .m-clean { background: var(--sev-clean); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--body);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--hairline-strong);
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .chip .n { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-3); }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--ground); }
+  .chip[aria-pressed="true"] .n { color: var(--ground); opacity: 0.72; }
+  .chip[data-sev="critical"] .dot { background: var(--sev-critical); }
+  .chip[data-sev="warning"] .dot { background: var(--sev-warning); }
+  .chip[data-sev="advisory"] .dot { background: var(--sev-advisory); }
+
+  /* ---------- findings ---------- */
+
+  .findings { display: flex; flex-direction: column; gap: 12px; }
+
+  .finding {
+    display: grid;
+    grid-template-columns: 4px minmax(0, 1fr);
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+  .finding .stripe { display: block; }
+  .finding[data-sev="critical"] .stripe { background: var(--sev-critical); }
+  .finding[data-sev="warning"] .stripe { background: var(--sev-warning); }
+  .finding[data-sev="advisory"] .stripe { background: var(--sev-advisory); }
+
+  .finding-body { padding: 14px 16px 15px; min-width: 0; }
+
+  .finding-top {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin-bottom: 7px;
+  }
+  .rule-id {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 2px 6px;
+    border-radius: var(--r-sm);
+    background: var(--surface-sunk);
+    color: var(--ink-2);
+  }
+  .sev-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: var(--r-sm);
+  }
+  .finding[data-sev="critical"] .sev-tag { background: var(--sev-critical-soft); color: var(--sev-critical); }
+  .finding[data-sev="warning"] .sev-tag { background: var(--sev-warning-soft); color: var(--sev-warning); }
+  .finding[data-sev="advisory"] .sev-tag { background: var(--sev-advisory-soft); color: var(--sev-advisory); }
+  .cat-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .finding h3 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 15.5px;
+    letter-spacing: -0.012em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  .finding p { margin: 0 0 10px; color: var(--ink-2); font-size: 13px; max-width: 68ch; }
+
+  .evidence {
+    margin: 0 0 10px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-sm);
+    background: var(--surface-sunk);
+    overflow: hidden;
+  }
+  .evidence .loc {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+    padding: 6px 10px 5px;
+    border-bottom: 1px dashed var(--hairline);
+    word-break: break-all;
+  }
+  .evidence pre {
+    margin: 0;
+    padding: 9px 10px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--ink);
+    white-space: pre;
+  }
+
+  .fix {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 10px;
+    align-items: baseline;
+    font-size: 12.5px;
+  }
+  .fix dt {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-top: 2px;
+  }
+  .fix dd { margin: 0; color: var(--ink-2); }
+  .fix dd code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: var(--surface-sunk);
+    padding: 1px 4px;
+    border-radius: 2px;
+    color: var(--ink);
+  }
+  .fix a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  .fix a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .empty {
+    border: 1px dashed var(--hairline-strong);
+    border-radius: var(--r-md);
+    padding: 34px 22px;
+    text-align: center;
+    color: var(--ink-2);
+    background: var(--surface);
+  }
+  .empty .big {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 19px;
+    color: var(--ink);
+    margin: 0 0 6px;
+    letter-spacing: -0.015em;
+  }
+
+  .parse-error {
+    border-left: 4px solid var(--sev-critical);
+    background: var(--sev-critical-soft);
+    border-radius: 0 var(--r-md) var(--r-md) 0;
+    padding: 13px 16px;
+  }
+  .parse-error strong { display: block; font-family: var(--display); font-size: 15px; margin-bottom: 4px; }
+  .parse-error code { font-family: var(--mono); font-size: 12px; }
+
+  /* ---------- rule reference ---------- */
+
+  .ref { margin-top: 56px; }
+  .ref-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .ref-head h2 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 24px;
+    letter-spacing: -0.025em;
+    margin: 0;
+  }
+  .ref-head p { margin: 0; color: var(--ink-2); font-size: 13px; max-width: 56ch; }
+
+  .table-scroll { overflow-x: auto; }
+  table.ref-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 720px;
+    font-size: 12.5px;
+  }
+  table.ref-table th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+    padding: 12px 12px 8px 0;
+    border-bottom: 1px solid var(--hairline-strong);
+    white-space: nowrap;
+  }
+  table.ref-table td {
+    padding: 10px 12px 10px 0;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: top;
+    color: var(--ink-2);
+  }
+  table.ref-table td.id {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  table.ref-table td.rule { color: var(--ink); }
+  table.ref-table tr[data-group] td { padding-top: 22px; }
+  table.ref-table a { color: var(--accent); }
+  .sev-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .sev-dot i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+  .sev-dot[data-sev="critical"] i { background: var(--sev-critical); }
+  .sev-dot[data-sev="warning"] i { background: var(--sev-warning); }
+  .sev-dot[data-sev="advisory"] i { background: var(--sev-advisory); }
+
+  .group-label {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  footer.colophon {
+    margin-top: 48px;
+    padding-top: 18px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 26px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.02em;
+  }
+
+  /* This page uses no animation or transition, so no reduced-motion override is needed. */
+</style>
+
+<div class="shell">
+
+  <header class="plate">
+    <div>
+      <h1 class="wordmark">Factory<span class="mk">&nbsp;Floor</span></h1>
+      <p class="standfirst">
+        Static analysis for Azure Data Factory pipelines and Power BI DAX. Paste a pipeline
+        definition or a set of measures; every finding is anchored to the exact line it came from
+        and to the Microsoft documentation that defines the rule.
+      </p>
+    </div>
+    <div class="plate-meta">
+      <div><b>30</b> rules</div>
+      <div><b>16</b> pipeline</div>
+      <div><b>14</b> dax</div>
+      <div>runs <b>in-browser</b></div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <span class="tool-label">Analyzer</span>
+    <div class="seg" role="tablist" aria-label="Analyzer">
+      <button id="mode-adf" role="tab" aria-selected="true">Data Factory pipeline</button>
+      <button id="mode-dax" role="tab" aria-selected="false">DAX measures</button>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn btn-ghost" id="load-sample">Load sample with defects</button>
+    <button class="btn btn-ghost" id="load-clean">Load clean sample</button>
+    <button class="btn btn-ghost" id="clear">Clear</button>
+    <button class="btn btn-primary" id="run">Run audit</button>
+  </div>
+
+  <div class="bench">
+
+    <section aria-labelledby="src-title">
+      <div class="pane-head">
+        <h2 class="pane-title" id="src-title">Source</h2>
+        <span class="pane-note" id="src-note">0 lines</span>
+      </div>
+      <div class="editor-wrap">
+        <textarea id="source" spellcheck="false" aria-label="Source to audit"></textarea>
+      </div>
+      <div class="privacy">
+        <span>
+          <b>Nothing leaves this page.</b> The rule engine is plain JavaScript running in your
+          browser — no upload, no API call, no telemetry. Paste production definitions if you want;
+          they stay on your machine.
+        </span>
+      </div>
+    </section>
+
+    <section aria-labelledby="res-title">
+      <div class="pane-head">
+        <h2 class="pane-title" id="res-title">Findings</h2>
+        <span class="pane-note" id="res-note">—</span>
+      </div>
+      <div id="scorecard"></div>
+      <div class="findings" id="findings"></div>
+    </section>
+
+  </div>
+
+  <section class="ref">
+    <div class="ref-head">
+      <h2>Rule reference</h2>
+      <p>
+        Every rule states the defect, not a style preference, and cites first-party documentation.
+        A rule with no citable source did not ship.
+      </p>
+    </div>
+    <div class="table-scroll">
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th style="width: 88px;">Rule</th>
+            <th>What it detects</th>
+            <th style="width: 108px;">Severity</th>
+            <th style="width: 128px;">Category</th>
+            <th style="width: 170px;">Source</th>
+          </tr>
+        </thead>
+        <tbody id="ref-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    <span>Factory Floor — deterministic rule engine, no model inference</span>
+    <span>Samples are synthetic; no production schema, credentials or patient data</span>
+    <span>Built by Maxwell Kadzashie</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =====================================================================
+     RULE CATALOG — every entry carries the doc that defines the behavior
+     ===================================================================== */
+
+  var DOCS = {
+    policy: ["Activity policy (retry, timeout, secureInput/secureOutput)", "https://learn.microsoft.com/dotnet/api/microsoft.azure.management.datafactory.models.activitypolicy?view=azure-dotnet"],
+    keyvault: ["Store credentials in Azure Key Vault", "https://learn.microsoft.com/azure/data-factory/store-credentials-in-key-vault"],
+    foreach: ["ForEach activity — limits and workarounds", "https://learn.microsoft.com/azure/data-factory/control-flow-for-each-activity"],
+    lookup: ["Lookup activity — supported capabilities", "https://learn.microsoft.com/azure/data-factory/control-flow-lookup-activity"],
+    cicd: ["CI/CD best practices for Data Factory", "https://learn.microsoft.com/azure/data-factory/continuous-integration-delivery"],
+    security: ["Security considerations for data movement", "https://learn.microsoft.com/azure/data-factory/data-movement-security-considerations"],
+    divide: ["DIVIDE function vs. divide operator", "https://learn.microsoft.com/dax/best-practices/dax-divide-function-operator"],
+    errfn: ["Appropriate use of error functions", "https://learn.microsoft.com/dax/best-practices/dax-error-functions"],
+    countrows: ["Use COUNTROWS instead of COUNT", "https://learn.microsoft.com/dax/best-practices/dax-countrows"],
+    selectedvalue: ["Use SELECTEDVALUE instead of VALUES", "https://learn.microsoft.com/dax/best-practices/dax-selectedvalue"],
+    colmeas: ["Column and measure references", "https://learn.microsoft.com/dax/best-practices/dax-column-measure-references"],
+    filterarg: ["Avoid using FILTER as a filter argument", "https://learn.microsoft.com/dax/best-practices/dax-avoid-avoid-filter-as-filter-argument"],
+    vars: ["Use variables to improve your DAX formulas", "https://learn.microsoft.com/dax/best-practices/dax-variables"],
+    calculate: ["CALCULATE — filter arguments", "https://learn.microsoft.com/dax/calculate-function-dax"]
+  };
+
+  var RULES = {
+    "ADF-001": { sev: "warning",  cat: "resilience",  title: "Activity has no retry policy",        doc: "policy" },
+    "ADF-002": { sev: "warning",  cat: "resilience",  title: "Activity has no timeout override",     doc: "policy" },
+    "ADF-003": { sev: "critical", cat: "secrets",     title: "Secret stored as a literal value",    doc: "keyvault" },
+    "ADF-004": { sev: "critical", cat: "correctness", title: "Variable written inside a parallel ForEach", doc: "foreach" },
+    "ADF-005": { sev: "critical", cat: "correctness", title: "ForEach batchCount above the documented maximum", doc: "foreach" },
+    "ADF-006": { sev: "advisory", cat: "concurrency", title: "Parallel ForEach with no batchCount",  doc: "foreach" },
+    "ADF-007": { sev: "critical", cat: "correctness", title: "ForEach nested inside another ForEach", doc: "foreach" },
+    "ADF-008": { sev: "warning",  cat: "correctness", title: "Lookup returns all rows — silent truncation at 5,000", doc: "lookup" },
+    "ADF-009": { sev: "warning",  cat: "resilience",  title: "Pipeline has no failure path",         doc: "policy" },
+    "ADF-010": { sev: "warning",  cat: "secrets",     title: "Activity handling credentials is not marked secure", doc: "policy" },
+    "ADF-011": { sev: "critical", cat: "structure",   title: "dependsOn names an activity that does not exist", doc: "foreach" },
+    "ADF-012": { sev: "critical", cat: "structure",   title: "Duplicate activity name",              doc: "foreach" },
+    "ADF-013": { sev: "advisory", cat: "structure",   title: "Activity has no dependency and starts immediately", doc: "foreach" },
+    "ADF-014": { sev: "advisory", cat: "portability", title: "Hard-coded date literal",              doc: "cicd" },
+    "ADF-015": { sev: "warning",  cat: "secrets",     title: "SQL text assembled by string concatenation", doc: "security" },
+    "ADF-016": { sev: "advisory", cat: "governance",  title: "Pipeline has no folder or annotations", doc: "cicd" },
+
+    "DAX-001": { sev: "warning",  cat: "correctness", title: "Division by an expression without DIVIDE", doc: "divide" },
+    "DAX-002": { sev: "warning",  cat: "performance", title: "IFERROR or ISERROR masks the defect",   doc: "errfn" },
+    "DAX-003": { sev: "advisory", cat: "performance", title: "COUNT on a column where rows are the intent", doc: "countrows" },
+    "DAX-004": { sev: "advisory", cat: "clarity",     title: "HASONEVALUE + VALUES pattern",          doc: "selectedvalue" },
+    "DAX-005": { sev: "warning",  cat: "robustness",  title: "Measure reference is fully qualified",  doc: "colmeas" },
+    "DAX-006": { sev: "warning",  cat: "performance", title: "FILTER used where a boolean predicate works", doc: "filterarg" },
+    "DAX-007": { sev: "warning",  cat: "performance", title: "Sub-expression evaluated twice, no VAR", doc: "vars" },
+    "DAX-008": { sev: "advisory", cat: "clarity",     title: "EARLIER used instead of a variable",    doc: "vars" },
+    "DAX-009": { sev: "warning",  cat: "performance", title: "COUNTROWS(FILTER(...)) instead of CALCULATE", doc: "filterarg" },
+    "DAX-010": { sev: "advisory", cat: "correctness", title: "Measure returns text from FORMAT",      doc: "colmeas" },
+    "DAX-011": { sev: "advisory", cat: "portability", title: "Hard-coded date in a filter",           doc: "calculate" },
+    "DAX-012": { sev: "advisory", cat: "clarity",     title: "CALCULATE nested three deep",           doc: "calculate" },
+    "DAX-013": { sev: "advisory", cat: "performance", title: "DISTINCTCOUNT on a fact column",        doc: "countrows" },
+    "DAX-014": { sev: "advisory", cat: "clarity",     title: "ALL used as a filter modifier",         doc: "calculate" }
+  };
+
+  var SEV_ORDER = { critical: 0, warning: 1, advisory: 2 };
+
+  /* =====================================================================
+     SHARED HELPERS
+     ===================================================================== */
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function clip(s, n) {
+    s = String(s).replace(/\s+/g, " ").trim();
+    return s.length > n ? s.slice(0, n - 1) + "…" : s;
+  }
+
+  function finding(id, loc, evidence, detail, fix) {
+    var r = RULES[id];
+    return {
+      id: id, sev: r.sev, cat: r.cat, title: r.title,
+      loc: loc, evidence: evidence, detail: detail, fix: fix, doc: r.doc
+    };
+  }
+
+  /* =====================================================================
+     AZURE DATA FACTORY ANALYZER
+     ===================================================================== */
+
+  var EXECUTION_TYPES = [
+    "copy", "lookup", "getmetadata", "sqlserverstoredprocedure", "script",
+    "webactivity", "webhook", "azurefunctionactivity", "executedataflow",
+    "databricksnotebook", "databrickssparkjar", "databrickssparkpython",
+    "azuremlexecutepipeline", "delete", "hdinsightspark", "custom"
+  ];
+
+  var SECRET_KEYS = /^(password|secret|accountkey|connectionstring|sastoken|sasuri|servicePrincipalKey|servicePrincipalCredential|accesstoken|apikey|authorization|clientsecret|token|credential)$/i;
+
+  function looksLikeExpression(v) {
+    return typeof v === "string" && (/^@/.test(v.trim()) || /@\{/.test(v));
+  }
+  function looksLikePlaceholder(v) {
+    return typeof v === "string" && (v === "" || /^<.*>$/.test(v.trim()) || /^\*+$/.test(v.trim()));
+  }
+
+  var CHILD_LISTS = ["activities", "ifTrueActivities", "ifFalseActivities", "cases", "defaultActivities"];
+
+  /* An activity's own definition with nested child activities removed, so a
+     container never inherits a finding that belongs to one of its children. */
+  function ownView(act) {
+    var clone = {};
+    Object.keys(act).forEach(function (k) { if (k !== "typeProperties") clone[k] = act[k]; });
+    var tp = act.typeProperties || {}, tpClone = {};
+    Object.keys(tp).forEach(function (k) {
+      if (CHILD_LISTS.indexOf(k) !== -1) return;
+      tpClone[k] = tp[k];
+    });
+    clone.typeProperties = tpClone;
+    return clone;
+  }
+
+  function auditADF(text) {
+    var root;
+    try {
+      root = JSON.parse(text);
+    } catch (e) {
+      return { parseError: "The source is not valid JSON. " + e.message };
+    }
+
+    var props = (root && root.properties) ? root.properties : root;
+    var pipelineName = (root && root.name) || (props && props.name) || "pipeline";
+    var activities = (props && props.activities) || (root && root.activities);
+
+    if (!Array.isArray(activities)) {
+      return { parseError: 'No activity list found. Expected an object with an "activities" array, either at the top level or under "properties".' };
+    }
+
+    var out = [];
+    var names = Object.create(null);
+    var duplicates = Object.create(null);
+    var sawFailureDependency = false;
+
+    /* --- collect every activity, with its JSON path and ForEach ancestry --- */
+    var flat = [];
+    (function walk(list, path, ancestry) {
+      list.forEach(function (act, i) {
+        if (!act || typeof act !== "object") return;
+        var p = path + "[" + i + "]";
+        flat.push({ act: act, path: p, ancestry: ancestry });
+
+        var n = act.name;
+        if (typeof n === "string") {
+          if (names[n]) duplicates[n] = true;
+          names[n] = names[n] ? names[n] + 1 : 1;
+        }
+
+        var nextAncestry = ancestry.concat([act]);
+        var tp = act.typeProperties || {};
+        if (Array.isArray(tp.activities)) {
+          walk(tp.activities, p + ".typeProperties.activities", nextAncestry);
+        }
+        if (Array.isArray(tp.ifTrueActivities)) {
+          walk(tp.ifTrueActivities, p + ".typeProperties.ifTrueActivities", nextAncestry);
+        }
+        if (Array.isArray(tp.ifFalseActivities)) {
+          walk(tp.ifFalseActivities, p + ".typeProperties.ifFalseActivities", nextAncestry);
+        }
+        if (Array.isArray(tp.cases)) {
+          tp.cases.forEach(function (c, ci) {
+            if (c && Array.isArray(c.activities)) {
+              walk(c.activities, p + ".typeProperties.cases[" + ci + "].activities", nextAncestry);
+            }
+          });
+        }
+        if (Array.isArray(tp.defaultActivities)) {
+          walk(tp.defaultActivities, p + ".typeProperties.defaultActivities", nextAncestry);
+        }
+      });
+    })(activities, "activities", []);
+
+    /* --- ADF-012 duplicate names --- */
+    Object.keys(duplicates).forEach(function (n) {
+      out.push(finding("ADF-012",
+        "activities[] — name \"" + n + "\" used " + names[n] + " times",
+        '"name": ' + JSON.stringify(n),
+        "Activity names are the identifiers dependsOn resolves against and the labels the monitoring view groups runs by. " + names[n] + " activities share this one.",
+        "Rename so each activity name is unique within the pipeline."));
+    });
+
+    /* --- per-activity rules --- */
+    flat.forEach(function (entry) {
+      var act = entry.act, path = entry.path, ancestry = entry.ancestry;
+      var type = String(act.type || "").toLowerCase();
+      var isExecution = EXECUTION_TYPES.indexOf(type) !== -1;
+      var label = act.name || "(unnamed)";
+
+      if (Array.isArray(act.dependsOn)) {
+        act.dependsOn.forEach(function (d) {
+          var conds = (d && d.dependencyConditions) || [];
+          conds.forEach(function (c) {
+            if (String(c).toLowerCase() === "failed") sawFailureDependency = true;
+          });
+          if (d && typeof d.activity === "string" && !names[d.activity]) {
+            out.push(finding("ADF-011",
+              path + ".dependsOn — from \"" + label + "\"",
+              '"activity": ' + JSON.stringify(d.activity),
+              "No activity in this pipeline is named " + JSON.stringify(d.activity) + ". The dependency can never be satisfied, so \"" + label + "\" is unreachable.",
+              "Correct the name to match an existing activity, or remove the dependency."));
+          }
+        });
+      }
+
+      /* ADF-001 / ADF-002 — activity policy */
+      if (isExecution) {
+        var pol = act.policy || {};
+        var retry = pol.retry;
+        if (retry === undefined || retry === null || retry === 0 || retry === "0") {
+          out.push(finding("ADF-001",
+            path + ".policy — \"" + label + "\"",
+            retry === undefined ? "(no policy.retry)" : '"retry": ' + JSON.stringify(retry),
+            "Retry defaults to 0. A transient fault — a throttled storage call, a dropped SQL connection — fails the activity and the pipeline run on the first attempt.",
+            "Set <code>policy.retry</code> to a small count with <code>retryIntervalInSeconds</code> (default 30)."));
+        }
+        if (pol.timeout === undefined || pol.timeout === null || pol.timeout === "") {
+          out.push(finding("ADF-002",
+            path + ".policy — \"" + label + "\"",
+            "(no policy.timeout)",
+            "Activity timeout defaults to 7 days. A hung activity holds the pipeline, its integration runtime slot and any downstream schedule for a week before it gives up.",
+            'Set <code>policy.timeout</code> to the real ceiling for this step, e.g. <code>"0.02:00:00"</code>.'));
+        }
+      }
+
+      /* ADF-010 — credentials in activity input/output not marked secure */
+      var own = ownView(act);
+      var actJson = JSON.stringify(own);
+      var carriesCredential = /"(authorization|password|secret|apikey|accesstoken|clientsecret)"\s*:/i.test(actJson);
+      if (carriesCredential && isExecution) {
+        var pol2 = act.policy || {};
+        if (pol2.secureInput !== true || pol2.secureOutput !== true) {
+          out.push(finding("ADF-010",
+            path + ".policy — \"" + label + "\"",
+            "secureInput: " + JSON.stringify(pol2.secureInput) + ", secureOutput: " + JSON.stringify(pol2.secureOutput),
+            "This activity carries a credential field, and activity input and output are written to the monitoring store unless marked secure. The credential becomes readable to anyone with run-history access.",
+            "Set <code>policy.secureInput</code> and <code>policy.secureOutput</code> to <code>true</code>."));
+        }
+      }
+
+      /* ForEach rules */
+      if (type === "foreach") {
+        var tp = act.typeProperties || {};
+        var parallel = tp.isSequential !== true;
+        var bc = tp.batchCount;
+
+        if (typeof bc === "number" && bc > 50) {
+          out.push(finding("ADF-005",
+            path + ".typeProperties.batchCount — \"" + label + "\"",
+            '"batchCount": ' + bc,
+            "batchCount has a documented maximum of 50. A value of " + bc + " does not raise the ceiling; the loop still runs at most 50 concurrent iterations, so the number encodes an expectation the service will not honour.",
+            "Set <code>batchCount</code> to 50 or below, or split into an outer/inner pipeline pair for more parallelism."));
+        }
+        if (parallel && (bc === undefined || bc === null)) {
+          out.push(finding("ADF-006",
+            path + ".typeProperties — \"" + label + "\"",
+            '"isSequential": ' + JSON.stringify(tp.isSequential) + " (parallel), no batchCount",
+            "isSequential defaults to false and batchCount defaults to 20, up to a maximum of 50 concurrent iterations. Concurrency is therefore implicit, and iterations writing to the same target can conflict.",
+            "State <code>batchCount</code> explicitly so the concurrency the sink can absorb is visible in the definition."));
+        }
+
+        var nestedForEach = null;
+        (function findNested(list) {
+          if (!Array.isArray(list)) return;
+          list.forEach(function (c) {
+            if (!c || typeof c !== "object") return;
+            if (String(c.type || "").toLowerCase() === "foreach") nestedForEach = c;
+            var ctp = c.typeProperties || {};
+            findNested(ctp.activities);
+            findNested(ctp.ifTrueActivities);
+            findNested(ctp.ifFalseActivities);
+          });
+        })(tp.activities);
+
+        if (nestedForEach) {
+          out.push(finding("ADF-007",
+            path + ".typeProperties.activities — inside \"" + label + "\"",
+            '"name": ' + JSON.stringify(nestedForEach.name || "(unnamed)") + ', "type": "ForEach"',
+            "A ForEach cannot be nested inside another ForEach or an Until loop. This definition will not validate.",
+            "Move the inner loop into its own pipeline and call it with Execute Pipeline from the outer loop."));
+        }
+      }
+
+      /* ADF-004 — variable write inside a parallel ForEach */
+      if (type === "setvariable" || type === "appendvariable") {
+        var parallelAncestor = null;
+        ancestry.forEach(function (a) {
+          if (String(a.type || "").toLowerCase() === "foreach") {
+            var atp = a.typeProperties || {};
+            if (atp.isSequential !== true) parallelAncestor = a;
+          }
+        });
+        if (parallelAncestor) {
+          out.push(finding("ADF-004",
+            path + " — \"" + label + "\" inside ForEach \"" + (parallelAncestor.name || "(unnamed)") + "\"",
+            '"type": ' + JSON.stringify(act.type) + ', variable: ' + JSON.stringify((act.typeProperties || {}).variableName || "?"),
+            "Pipeline variables are global to the pipeline; they are not scoped to a ForEach iteration. Documented limitation: SetVariable cannot be used inside a ForEach that runs in parallel. Concurrent iterations overwrite each other and the surviving value is whichever iteration finished last.",
+            "Set <code>isSequential: true</code> on the loop, or move the body into a child pipeline called by Execute Pipeline so each iteration gets its own variable scope."));
+        }
+      }
+
+      /* ADF-008 — Lookup returning all rows */
+      if (type === "lookup") {
+        var ltp = act.typeProperties || {};
+        if (ltp.firstRowOnly === false) {
+          out.push(finding("ADF-008",
+            path + ".typeProperties — \"" + label + "\"",
+            '"firstRowOnly": false',
+            "A Lookup returns at most 5,000 rows and 4 MB of output. Beyond that the first 5,000 rows are returned with no error, so a control table that grows past the limit silently stops driving the rest of the load.",
+            "Guard the row count, or page through an outer/inner pipeline pair instead of relying on one Lookup."));
+        }
+      }
+
+      /* ADF-015 — SQL assembled by concatenation */
+      var tpAll = act.typeProperties || {};
+      ["query", "sqlReaderQuery", "script", "text", "storedProcedureParameters", "preCopyScript"].forEach(function (k) {
+        var v = tpAll[k];
+        if (typeof v === "string" && /@\{?\s*concat\s*\(/i.test(v)) {
+          out.push(finding("ADF-015",
+            path + ".typeProperties." + k + " — \"" + label + "\"",
+            clip(v, 150),
+            "The SQL text is built by concatenating a runtime value into the statement. Whatever produced that value — a control table, a Lookup, a trigger parameter — becomes able to alter the statement itself.",
+            "Pass the value as a parameter (<code>storedProcedureParameters</code>, or a parameterised dataset) rather than concatenating it into the text."));
+        }
+        if (typeof v === "string" && /(script|query)/i.test(k)) {
+          var sc = v;
+          if (/@\{?\s*(item|pipeline|variables|activity)\s*\(/i.test(sc) && /\bfrom\b|\binto\b|\bexec\b/i.test(sc) && !/@\{?\s*concat\s*\(/i.test(sc)) {
+            /* interpolation directly into SQL without concat() still counts */
+            out.push(finding("ADF-015",
+              path + ".typeProperties." + k + " — \"" + label + "\"",
+              clip(v, 150),
+              "A runtime expression is interpolated straight into the SQL statement, so the value can change the statement rather than only the data it acts on.",
+              "Bind the value as a parameter instead of interpolating it into the statement text."));
+          }
+        }
+      });
+
+      /* ADF-014 — hard-coded date literal */
+      var tpJson = JSON.stringify(own.typeProperties);
+      var dateMatch = tpJson.match(/"[^"]*?(\d{4}-\d{2}-\d{2})[^"]*?"/);
+      if (dateMatch && !looksLikeExpression(dateMatch[0])) {
+        out.push(finding("ADF-014",
+          path + ".typeProperties — \"" + label + "\"",
+          dateMatch[0],
+          "A date is fixed in the definition. The pipeline produces a different result on every run after that date, and the same artifact cannot be promoted across environments or replayed for a different window.",
+          "Replace with a pipeline parameter or a trigger window expression such as <code>@pipeline().parameters.loadDate</code>."));
+      }
+    });
+
+    /* --- ADF-013 — root activities with no dependency --- */
+    var rootLevel = flat.filter(function (e) { return e.path.indexOf(".typeProperties") === -1; });
+    var withDeps = rootLevel.filter(function (e) { return Array.isArray(e.act.dependsOn) && e.act.dependsOn.length; });
+    if (rootLevel.length > 1 && withDeps.length > 0) {
+      rootLevel.forEach(function (e) {
+        var d = e.act.dependsOn;
+        if (!Array.isArray(d) || d.length === 0) {
+          var isReferenced = rootLevel.some(function (o) {
+            return Array.isArray(o.act.dependsOn) && o.act.dependsOn.some(function (x) { return x && x.activity === e.act.name; });
+          });
+          if (!isReferenced) {
+            out.push(finding("ADF-013",
+              e.path + " — \"" + (e.act.name || "(unnamed)") + "\"",
+              "(no dependsOn, and nothing depends on it)",
+              "This activity has no place in the dependency graph. It starts the moment the pipeline starts and nothing waits for it, so its ordering relative to the rest of the pipeline is undefined.",
+              "Add a <code>dependsOn</code> edge if it belongs in the sequence; if it is genuinely independent, confirm that is intended."));
+          }
+        }
+      });
+    }
+
+    /* --- ADF-009 — no failure path anywhere --- */
+    if (!sawFailureDependency && flat.length > 1) {
+      out.push(finding("ADF-009",
+        "activities[] — pipeline \"" + pipelineName + "\"",
+        "(no dependencyConditions containing \"Failed\")",
+        "No activity in this pipeline reacts to a failure. When a step fails the run stops where it stopped: no compensating write, no status row, no notification — only whatever the monitoring view shows.",
+        "Add a failure branch (<code>dependencyConditions: [\"Failed\"]</code>) that records the outcome or raises an alert."));
+    }
+
+    /* --- ADF-003 — secret literals anywhere in the document --- */
+    (function scan(node, path) {
+      if (!node || typeof node !== "object") return;
+      if (Array.isArray(node)) {
+        node.forEach(function (v, i) { scan(v, path + "[" + i + "]"); });
+        return;
+      }
+      Object.keys(node).forEach(function (k) {
+        var v = node[k];
+        var here = path ? path + "." + k : k;
+        if (SECRET_KEYS.test(k) && typeof v === "string" && !looksLikeExpression(v) && !looksLikePlaceholder(v)) {
+          out.push(finding("ADF-003",
+            here,
+            '"' + k + '": "' + clip(v, 18).replace(/./g, function (c, i) { return i < 4 ? c : "•"; }) + '"',
+            "A credential is written as a literal string in the definition. It is now in source control, in every exported ARM template, and in the diff of every pull request that touches this file.",
+            'Replace with a Key Vault reference: <code>{ "type": "AzureKeyVaultSecret", "store": { ... }, "secretName": "..." }</code>.'));
+        } else if (SECRET_KEYS.test(k) && v && typeof v === "object" && v.type && String(v.type) !== "AzureKeyVaultSecret" && typeof v.value === "string" && v.value && !looksLikePlaceholder(v.value)) {
+          out.push(finding("ADF-003",
+            here,
+            '"' + k + '": { "type": "' + v.type + '", "value": "' + clip(v.value, 12).replace(/./g, function (c, i) { return i < 3 ? c : "•"; }) + '" }',
+            "The credential is inline as a SecureString rather than a Key Vault reference. SecureString hides the value in the portal but the plaintext still passes through the deployment artifact.",
+            "Change the type to <code>AzureKeyVaultSecret</code> and reference the secret by name."));
+        }
+        scan(v, here);
+      });
+    })(root, "");
+
+    /* --- ADF-016 — governance metadata --- */
+    var folder = (root && root.folder) || (props && props.folder);
+    var annotations = (props && props.annotations) || (root && root.annotations);
+    if (!folder && (!annotations || !annotations.length)) {
+      out.push(finding("ADF-016",
+        "properties — pipeline \"" + pipelineName + "\"",
+        "(no folder, no annotations)",
+        "The pipeline carries no folder and no annotations, so it cannot be grouped in the authoring tree or filtered in monitoring once the factory holds more than a handful of pipelines.",
+        "Add a <code>folder.name</code> and annotations for domain, layer and owner."));
+    }
+
+    return { findings: out, subject: pipelineName, unit: "activities", unitCount: flat.length };
+  }
+
+  /* =====================================================================
+     DAX ANALYZER
+     ===================================================================== */
+
+  function stripDaxComments(s) {
+    var out = "", i = 0, inStr = false;
+    while (i < s.length) {
+      var c = s[i], n = s[i + 1];
+      if (inStr) { out += c; if (c === '"') inStr = false; i++; continue; }
+      if (c === '"') { inStr = true; out += c; i++; continue; }
+      if (c === "/" && n === "/") { while (i < s.length && s[i] !== "\n") i++; continue; }
+      if (c === "-" && n === "-") { while (i < s.length && s[i] !== "\n") i++; continue; }
+      if (c === "/" && n === "*") { i += 2; while (i < s.length && !(s[i] === "*" && s[i + 1] === "/")) i++; i += 2; continue; }
+      out += c; i++;
+    }
+    return out;
+  }
+
+  function matchParen(s, open) {
+    var d = 0, inStr = false;
+    for (var i = open; i < s.length; i++) {
+      var c = s[i];
+      if (inStr) { if (c === '"') inStr = false; continue; }
+      if (c === '"') { inStr = true; continue; }
+      if (c === "(") d++;
+      else if (c === ")") { d--; if (d === 0) return i; }
+    }
+    return -1;
+  }
+
+  function findCalls(expr, name) {
+    var res = [], re = new RegExp("\\b" + name + "\\s*\\(", "gi"), m;
+    while ((m = re.exec(expr)) !== null) {
+      var open = m.index + m[0].length - 1;
+      var close = matchParen(expr, open);
+      if (close < 0) { re.lastIndex = m.index + m[0].length; continue; }
+      res.push({ start: m.index, open: open, close: close, inner: expr.slice(open + 1, close), whole: expr.slice(m.index, close + 1) });
+      re.lastIndex = m.index + m[0].length;
+    }
+    return res;
+  }
+
+  function splitArgs(inner) {
+    var out = [], d = 0, inStr = false, cur = "";
+    for (var i = 0; i < inner.length; i++) {
+      var c = inner[i];
+      if (inStr) { cur += c; if (c === '"') inStr = false; continue; }
+      if (c === '"') { inStr = true; cur += c; continue; }
+      if (c === "(" || c === "[" || c === "{") { d++; cur += c; continue; }
+      if (c === ")" || c === "]" || c === "}") { d--; cur += c; continue; }
+      if (c === "," && d === 0) { out.push(cur.trim()); cur = ""; continue; }
+      cur += c;
+    }
+    if (cur.trim()) out.push(cur.trim());
+    return out;
+  }
+
+  function parseMeasures(text) {
+    var src = stripDaxComments(text);
+    /* DEFINE MEASURE form */
+    var defRe = /\bMEASURE\s+(?:'([^']+)'|([A-Za-z_][\w ]*))\[([^\]]+)\]\s*=/gi;
+    var measures = [], m;
+    var hasDefine = /\bDEFINE\b/i.test(src) && defRe.test(src);
+    defRe.lastIndex = 0;
+
+    if (hasDefine) {
+      var marks = [];
+      while ((m = defRe.exec(src)) !== null) {
+        marks.push({ name: m[3].trim(), start: m.index, exprStart: m.index + m[0].length });
+      }
+      marks.forEach(function (mk, i) {
+        var end = i + 1 < marks.length ? marks[i + 1].start : src.length;
+        var body = src.slice(mk.exprStart, end);
+        body = body.replace(/\bEVALUATE\b[\s\S]*$/i, "");
+        measures.push({ name: mk.name, expr: body.trim() });
+      });
+      return measures;
+    }
+
+    /* Blank-line separated "Name = expression" blocks */
+    src.split(/\n\s*\n+/).forEach(function (block) {
+      var b = block.trim();
+      if (!b) return;
+      var eq = -1, d = 0, inStr = false;
+      for (var i = 0; i < b.length; i++) {
+        var c = b[i];
+        if (inStr) { if (c === '"') inStr = false; continue; }
+        if (c === '"') { inStr = true; continue; }
+        if (c === "(" || c === "[") d++;
+        else if (c === ")" || c === "]") d--;
+        else if (c === "=" && d === 0 && b[i + 1] !== "=" && b[i - 1] !== "<" && b[i - 1] !== ">" && b[i - 1] !== "=") { eq = i; break; }
+      }
+      if (eq < 0) return;
+      var nm = b.slice(0, eq).trim().replace(/^\[|\]$/g, "");
+      var ex = b.slice(eq + 1).trim();
+      if (nm && ex) measures.push({ name: nm, expr: ex });
+    });
+    return measures;
+  }
+
+  function auditDAX(text) {
+    var measures = parseMeasures(text);
+    if (!measures.length) {
+      return { parseError: 'No measures found. Write one measure per block as <Name> = <expression>, separated by a blank line, or paste a DEFINE MEASURE script.' };
+    }
+
+    var measureNames = {};
+    measures.forEach(function (mm) { measureNames[mm.name.toLowerCase()] = true; });
+
+    var out = [];
+
+    measures.forEach(function (mm) {
+      var name = mm.name, expr = mm.expr;
+      var loc = "measure “" + name + "”";
+      var hasVar = /\bVAR\b/i.test(expr);
+
+      /* DAX-001 — division by an expression */
+      (function () {
+        var brk = 0, inStr = false;
+        for (var i = 0; i < expr.length; i++) {
+          var c = expr[i];
+          if (inStr) { if (c === '"') inStr = false; continue; }
+          if (c === '"') { inStr = true; continue; }
+          if (c === "[") { brk++; continue; }
+          if (c === "]") { brk--; continue; }
+          if (c !== "/" || brk > 0) continue;
+          var rest = expr.slice(i + 1).replace(/^\s+/, "");
+          if (!rest) continue;
+          var head = rest[0];
+          if (!(head === "[" || head === "(" || head === "'" || /[A-Za-z_]/.test(head))) continue;
+          out.push(finding("DAX-001", loc,
+            clip(expr.slice(Math.max(0, i - 40), i + 40), 110),
+            "The denominator is an expression, not a constant, so it can evaluate to zero or BLANK. The / operator raises a division error in that case; DIVIDE returns BLANK (or a stated alternate) and is better optimised for the test than wrapping it in IF.",
+            "Rewrite as <code>DIVIDE(numerator, denominator)</code>."));
+          break;
+        }
+      })();
+
+      /* DAX-002 — error functions */
+      ["IFERROR", "ISERROR"].forEach(function (fn) {
+        findCalls(expr, fn).forEach(function (c) {
+          out.push(finding("DAX-002", loc, clip(c.whole, 130),
+            fn + " suppresses the error rather than preventing it, and it increases the number of storage engine scans the query needs. The underlying cause — an unexpected BLANK, a bad type conversion — stays in the model and stays invisible.",
+            "Remove the error handling and fix the cause: an error-tolerant function such as <code>DIVIDE</code>, a type fix in Power Query, or a nullability constraint on the column."));
+        });
+      });
+
+      /* DAX-003 — COUNT on a column */
+      findCalls(expr, "COUNT").forEach(function (c) {
+        if (/^\s*(?:'[^']+'|[A-Za-z_][\w ]*)\[[^\]]+\]\s*$/.test(c.inner)) {
+          out.push(finding("DAX-003", loc, clip(c.whole, 120),
+            "COUNT counts non-blank values in a column. If the intent is the number of rows, COUNTROWS is faster, ignores blanks in any column, and states the intent in the name.",
+            "Use <code>COUNTROWS(Table)</code> when counting rows."));
+        }
+      });
+
+      /* DAX-004 — HASONEVALUE + VALUES */
+      if (/\bHASONEVALUE\s*\(/i.test(expr) && /\bVALUES\s*\(/i.test(expr)) {
+        out.push(finding("DAX-004", loc, clip(expr, 130),
+          "This is the pre-SELECTEDVALUE defensive pattern: HASONEVALUE guards VALUES against returning more than one row. SELECTEDVALUE does both in one call and takes the alternate result directly.",
+          "Replace with <code>SELECTEDVALUE(Table[Column], alternate)</code>."));
+      }
+
+      /* DAX-005 — fully qualified measure reference */
+      (function () {
+        var re = /(?:'([^']+)'|([A-Za-z_][\w]*))\[([^\]]+)\]/g, mm2;
+        while ((mm2 = re.exec(expr)) !== null) {
+          var refName = mm2[3].trim();
+          if (measureNames[refName.toLowerCase()] && refName.toLowerCase() !== name.toLowerCase()) {
+            out.push(finding("DAX-005", loc, mm2[0],
+              refName + " is a measure in this set, referenced with a table prefix. A measure belongs to the model, not the table; its home table is a cosmetic property. Change that property and every fully qualified reference to it breaks.",
+              "Reference measures unqualified — <code>[" + refName + "]</code> — and columns fully qualified."));
+            break;
+          }
+        }
+      })();
+
+      /* DAX-006 — FILTER as a filter argument of CALCULATE */
+      ["CALCULATE", "CALCULATETABLE"].forEach(function (fn) {
+        findCalls(expr, fn).forEach(function (c) {
+          var args = splitArgs(c.inner);
+          args.slice(1).forEach(function (a) {
+            if (!/^\s*FILTER\s*\(/i.test(a)) return;
+            var inner = findCalls(a, "FILTER")[0];
+            if (!inner) return;
+            var fargs = splitArgs(inner.inner);
+            var predicate = fargs[1] || "";
+            var refsMeasure = false;
+            var re2 = /(?:'([^']+)'|([A-Za-z_][\w]*))?\[([^\]]+)\]/g, r2;
+            while ((r2 = re2.exec(predicate)) !== null) {
+              var nm2 = r2[3].trim().toLowerCase();
+              if (measureNames[nm2] || (!r2[1] && !r2[2])) refsMeasure = true;
+            }
+            var multiTable = (function () {
+              var tabs = {}, re3 = /(?:'([^']+)'|([A-Za-z_][\w]*))\[/g, r3;
+              while ((r3 = re3.exec(predicate)) !== null) tabs[(r3[1] || r3[2]).toLowerCase()] = true;
+              return Object.keys(tabs).length > 1;
+            })();
+            if (refsMeasure || multiTable) return;
+            out.push(finding("DAX-006", loc, clip(a, 130),
+              "FILTER evaluates its predicate row by row over the table and hands CALCULATE a table expression. This predicate references one table and no measure, so a boolean filter argument does the same work — and import models are column stores explicitly optimised to filter columns that way.",
+              "Pass the predicate directly: <code>CALCULATE([Measure], KEEPFILTERS(" + esc(clip(predicate, 44)) + "))</code>."));
+          });
+        });
+      });
+
+      /* DAX-009 — COUNTROWS(FILTER(...)) */
+      findCalls(expr, "COUNTROWS").forEach(function (c) {
+        if (/^\s*FILTER\s*\(/i.test(c.inner)) {
+          out.push(finding("DAX-009", loc, clip(c.whole, 130),
+            "COUNTROWS wrapped around FILTER materialises the filtered table before counting it. CALCULATE applies the condition as a filter and counts without building the intermediate table.",
+            "Rewrite as <code>CALCULATE(COUNTROWS(Table), &lt;predicate&gt;)</code>."));
+        }
+      });
+
+      /* DAX-007 — repeated sub-expression without VAR */
+      if (!hasVar) {
+        var seen = {}, flagged = false;
+        ["CALCULATE", "SUMX", "CALCULATETABLE", "AVERAGEX"].forEach(function (fn) {
+          if (flagged) return;
+          findCalls(expr, fn).forEach(function (c) {
+            if (flagged) return;
+            var key = c.whole.replace(/\s+/g, " ").toLowerCase();
+            if (key.length < 24) return;
+            if (seen[key]) {
+              out.push(finding("DAX-007", loc, clip(c.whole, 130),
+                "This sub-expression appears more than once in the measure and there is no VAR. The engine evaluates it each time it occurs, so the measure does the same work twice for one result.",
+                "Assign it once with <code>VAR</code> and reference the variable in <code>RETURN</code>."));
+              flagged = true;
+              return;
+            }
+            seen[key] = true;
+          });
+        });
+      }
+
+      /* DAX-008 — EARLIER */
+      findCalls(expr, "EARLIER").forEach(function (c) {
+        out.push(finding("DAX-008", loc, clip(c.whole, 110),
+          "EARLIER reaches back to an outer row context. It predates variables, and it is the part of a formula readers most often misread — there is no name on the value it returns.",
+          "Capture the outer value in a <code>VAR</code> before the iterator and reference it by name."));
+      });
+
+      /* DAX-010 — FORMAT as the measure result */
+      (function () {
+        var f = findCalls(expr, "FORMAT")[0];
+        if (f && f.start === 0 && f.close === expr.length - 1) {
+          out.push(finding("DAX-010", loc, clip(expr, 120),
+            "FORMAT returns text. A text measure will not aggregate, will not sort numerically in a visual, and cannot be used in a numeric axis or a conditional-formatting rule.",
+            "Return the number and set the display format on the measure instead."));
+        }
+      })();
+
+      /* DAX-011 — hard-coded date in a filter */
+      (function () {
+        var d1 = findCalls(expr, "DATE")[0];
+        var lit = expr.match(/"\s*\d{4}-\d{2}-\d{2}[^"]*"/);
+        var ev = null;
+        if (d1 && /^\s*\d{4}\s*,/.test(d1.inner)) ev = d1.whole;
+        else if (lit) ev = lit[0];
+        if (ev) {
+          out.push(finding("DAX-011", loc, clip(ev, 90),
+            "The boundary is fixed in the measure. It will be wrong at the next period boundary, and every report that uses the measure inherits that without warning.",
+            "Drive the boundary from the date table or a what-if parameter, e.g. <code>MAX('Date'[Date])</code> or a fiscal-year flag column."));
+        }
+      })();
+
+      /* DAX-012 — CALCULATE nested three deep */
+      (function () {
+        var depth = 0;
+        function walk(s, d) {
+          depth = Math.max(depth, d);
+          findCalls(s, "CALCULATE").forEach(function (c) { walk(c.inner, d + 1); });
+        }
+        findCalls(expr, "CALCULATE").forEach(function (c) { walk(c.inner, 1); });
+        if (depth >= 3) {
+          out.push(finding("DAX-012", loc, clip(expr, 130),
+            "CALCULATE is nested " + depth + " levels deep. Each level performs a context transition, and the filter context arriving at the innermost expression is no longer something a reader can hold in their head.",
+            "Flatten with <code>VAR</code> so each context change is a named, separately testable step."));
+        }
+      })();
+
+      /* DAX-013 — DISTINCTCOUNT */
+      findCalls(expr, "DISTINCTCOUNT").forEach(function (c) {
+        out.push(finding("DAX-013", loc, clip(c.whole, 110),
+          "DISTINCTCOUNT builds a distinct set at query time. On a high-cardinality fact column the cost scales with cardinality rather than with the size of the filtered result, so it is usually the slowest measure on a page.",
+          "If the column is a key, consider <code>COUNTROWS(DISTINCT(...))</code> against a dimension, or a pre-aggregated distinct count."));
+      });
+
+      /* DAX-014 — ALL as a filter modifier */
+      ["CALCULATE", "CALCULATETABLE"].forEach(function (fn) {
+        findCalls(expr, fn).forEach(function (c) {
+          splitArgs(c.inner).slice(1).forEach(function (a) {
+            if (/^\s*ALL\s*\(/i.test(a)) {
+              out.push(finding("DAX-014", loc, clip(a, 100),
+                "ALL is doing two jobs here: it is a table function and, in this position, a filter modifier. Which one a reader assumes changes what they think the measure returns.",
+                "Use <code>REMOVEFILTERS(...)</code> when the intent is to clear filters — same behaviour, unambiguous name — or <code>ALLSELECTED</code> when the outer selection should survive."));
+            }
+          });
+        });
+      });
+    });
+
+    return { findings: out, subject: measures.length + (measures.length === 1 ? " measure" : " measures"), unit: "measures", unitCount: measures.length };
+  }
+
+  /* =====================================================================
+     SAMPLES
+     ===================================================================== */
+
+  var SAMPLES = {
+    adf: {
+      defects: JSON.stringify({
+        name: "pl_load_referrals_bronze",
+        properties: {
+          activities: [
+            {
+              name: "Lookup_TableList",
+              type: "Lookup",
+              typeProperties: {
+                firstRowOnly: false,
+                source: { type: "AzureSqlSource", sqlReaderQuery: "SELECT source_schema, source_table FROM meta.ingest_control WHERE is_active = 1" },
+                dataset: { referenceName: "ds_meta_control", type: "DatasetReference" }
+              }
+            },
+            {
+              name: "ForEach_Table",
+              type: "ForEach",
+              dependsOn: [{ activity: "Lookup_Tables", dependencyConditions: ["Succeeded"] }],
+              typeProperties: {
+                batchCount: 64,
+                items: { value: "@activity('Lookup_TableList').output.value", type: "Expression" },
+                activities: [
+                  {
+                    name: "Copy_To_Bronze",
+                    type: "Copy",
+                    typeProperties: {
+                      source: { type: "AzureSqlSource", sqlReaderQuery: "SELECT * FROM stg.referrals WHERE modified_on >= '2026-01-01'" },
+                      sink: { type: "ParquetSink", storeSettings: { type: "AzureBlobFSWriteSettings" } }
+                    },
+                    inputs: [{ referenceName: "ds_sql_source", type: "DatasetReference" }],
+                    outputs: [{ referenceName: "ds_adls_bronze", type: "DatasetReference" }]
+                  },
+                  {
+                    name: "Set_RowCount",
+                    type: "SetVariable",
+                    dependsOn: [{ activity: "Copy_To_Bronze", dependencyConditions: ["Succeeded"] }],
+                    typeProperties: { variableName: "vRowsCopied", value: { value: "@activity('Copy_To_Bronze').output.rowsCopied", type: "Expression" } }
+                  },
+                  {
+                    name: "ForEach_Partition",
+                    type: "ForEach",
+                    typeProperties: {
+                      items: { value: "@item().partitions", type: "Expression" },
+                      activities: [
+                        {
+                          name: "Script_Merge",
+                          type: "Script",
+                          policy: { timeout: "0.01:00:00", retry: 2 },
+                          typeProperties: {
+                            scripts: [{ type: "NonQuery" }],
+                            script: "@concat('MERGE INTO silver.', item().tableName, ' AS t USING bronze.', item().tableName, ' AS s ON t.id = s.id WHEN MATCHED THEN UPDATE SET t.modified_on = s.modified_on;')"
+                          },
+                          linkedServiceName: { referenceName: "ls_synapse", type: "LinkedServiceReference" }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              name: "Notify_Downstream",
+              type: "WebActivity",
+              typeProperties: {
+                url: "https://internal.example.invalid/hooks/ingest",
+                method: "POST",
+                headers: { Authorization: "Bearer sk_live_7f31c9a4be2d40118c5e" },
+                body: { pipeline: "pl_load_referrals_bronze", status: "complete" }
+              }
+            },
+            {
+              name: "Notify_Downstream",
+              type: "WebActivity",
+              dependsOn: [{ activity: "ForEach_Table", dependencyConditions: ["Succeeded"] }],
+              policy: { timeout: "0.00:10:00", retry: 1, secureInput: true, secureOutput: true },
+              typeProperties: {
+                url: "https://internal.example.invalid/hooks/audit",
+                method: "POST",
+                body: { pipeline: "pl_load_referrals_bronze" }
+              }
+            }
+          ],
+          variables: { vRowsCopied: { type: "String" } }
+        }
+      }, null, 2),
+
+      clean: JSON.stringify({
+        name: "pl_load_referrals_bronze",
+        properties: {
+          folder: { name: "bronze/ingest" },
+          annotations: ["domain:referrals", "layer:bronze", "owner:data-platform"],
+          parameters: { loadDate: { type: "String" } },
+          activities: [
+            {
+              name: "Lookup_TableList",
+              type: "Lookup",
+              policy: { timeout: "0.00:20:00", retry: 2, retryIntervalInSeconds: 30 },
+              typeProperties: {
+                firstRowOnly: true,
+                source: { type: "AzureSqlSource", sqlReaderQuery: "SELECT TOP 1 batch_id FROM meta.ingest_control WHERE is_active = 1" },
+                dataset: { referenceName: "ds_meta_control", type: "DatasetReference" }
+              }
+            },
+            {
+              name: "ForEach_Table",
+              type: "ForEach",
+              dependsOn: [{ activity: "Lookup_TableList", dependencyConditions: ["Succeeded"] }],
+              typeProperties: {
+                isSequential: false,
+                batchCount: 8,
+                items: { value: "@activity('Lookup_TableList').output.firstRow.tables", type: "Expression" },
+                activities: [
+                  {
+                    name: "Copy_To_Bronze",
+                    type: "Copy",
+                    policy: { timeout: "0.02:00:00", retry: 3, retryIntervalInSeconds: 60 },
+                    typeProperties: {
+                      source: { type: "AzureSqlSource" },
+                      sink: { type: "ParquetSink", storeSettings: { type: "AzureBlobFSWriteSettings" } }
+                    },
+                    inputs: [{ referenceName: "ds_sql_source", type: "DatasetReference" }],
+                    outputs: [{ referenceName: "ds_adls_bronze", type: "DatasetReference" }]
+                  }
+                ]
+              }
+            },
+            {
+              name: "Record_Failure",
+              type: "SqlServerStoredProcedure",
+              dependsOn: [{ activity: "ForEach_Table", dependencyConditions: ["Failed"] }],
+              policy: { timeout: "0.00:10:00", retry: 1 },
+              typeProperties: {
+                storedProcedureName: "[audit].[usp_log_pipeline_failure]",
+                storedProcedureParameters: { pipelineName: { value: "pl_load_referrals_bronze", type: "String" } }
+              },
+              linkedServiceName: { referenceName: "ls_audit_sql", type: "LinkedServiceReference" }
+            }
+          ]
+        }
+      }, null, 2)
+    },
+
+    dax: {
+      defects: [
+        "Revenue = SUM ( FactClaims[AllowedAmount] )",
+        "",
+        "Margin % = ( [Revenue] - [Cost] ) / [Revenue]",
+        "",
+        "Claims Paid =\nCALCULATE (\n    SUM ( FactClaims[PaidAmount] ),\n    FILTER ( DimStatus, DimStatus[StatusCode] = \"PAID\" )\n)",
+        "",
+        "Referral Count =\nCOUNTROWS (\n    FILTER ( FactReferrals, FactReferrals[IsClosed] = TRUE () )\n)",
+        "",
+        "Panel Size = DISTINCTCOUNT ( FactVisits[PatientKey] )",
+        "",
+        "Safe Rate = IFERROR ( [Claims Paid] / [Referral Count], 0 )",
+        "",
+        "Selected Payer =\nIF (\n    HASONEVALUE ( DimPayer[PayerName] ),\n    VALUES ( DimPayer[PayerName] ),\n    \"Multiple payers\"\n)",
+        "",
+        "YoY Growth % =\n( [Claims Paid] - CALCULATE ( [Claims Paid], SAMEPERIODLASTYEAR ( DimDate[Date] ) ) )\n    / CALCULATE ( [Claims Paid], SAMEPERIODLASTYEAR ( DimDate[Date] ) )",
+        "",
+        "Visits FY26 =\nCALCULATE ( COUNTROWS ( FactVisits ), DimDate[Date] >= DATE ( 2026, 1, 1 ) )",
+        "",
+        "Open Encounters = COUNT ( FactEncounters[EncounterKey] )",
+        "",
+        "Provider Cost Rank =\nCOUNTROWS (\n    FILTER (\n        DimProvider,\n        EARLIER ( DimProvider[TotalCost] ) < DimProvider[TotalCost]\n    )\n) + 1",
+        "",
+        "Paid Label = FORMAT ( SUM ( FactClaims[PaidAmount] ), \"$#,0\" )",
+        "",
+        "Net Claims = FactClaims[Claims Paid] - [Cost]",
+        "",
+        "Share of Payer Total =\nDIVIDE ( [Claims Paid], CALCULATE ( [Claims Paid], ALL ( DimPayer ) ) )",
+        "",
+        "Deep Context =\nCALCULATE (\n    CALCULATE (\n        CALCULATE ( [Revenue], DimPayer[IsCommercial] = TRUE () ),\n        DimDate[IsWorkday] = TRUE ()\n    ),\n    REMOVEFILTERS ( DimProvider )\n)",
+        "",
+        "Cost = SUM ( FactClaims[CostAmount] )"
+      ].join("\n"),
+
+      clean: [
+        "Revenue = SUM ( FactClaims[AllowedAmount] )",
+        "",
+        "Cost = SUM ( FactClaims[CostAmount] )",
+        "",
+        "Margin % = DIVIDE ( [Revenue] - [Cost], [Revenue] )",
+        "",
+        "Claims Paid =\nCALCULATE (\n    SUM ( FactClaims[PaidAmount] ),\n    KEEPFILTERS ( DimStatus[StatusCode] = \"PAID\" )\n)",
+        "",
+        "Referral Count =\nCALCULATE (\n    COUNTROWS ( FactReferrals ),\n    KEEPFILTERS ( FactReferrals[IsClosed] = TRUE () )\n)",
+        "",
+        "Selected Payer = SELECTEDVALUE ( DimPayer[PayerName], \"Multiple payers\" )",
+        "",
+        "YoY Growth % =\nVAR PriorYear =\n    CALCULATE ( [Claims Paid], SAMEPERIODLASTYEAR ( DimDate[Date] ) )\nRETURN\n    DIVIDE ( [Claims Paid] - PriorYear, PriorYear )",
+        "",
+        "Share of Payer Total =\nVAR PayerTotal =\n    CALCULATE ( [Claims Paid], REMOVEFILTERS ( DimPayer ) )\nRETURN\n    DIVIDE ( [Claims Paid], PayerTotal )",
+        "",
+        "Open Encounters = COUNTROWS ( FactEncounters )"
+      ].join("\n")
+    }
+  };
+
+  /* =====================================================================
+     RENDER
+     ===================================================================== */
+
+  var els = {
+    source: document.getElementById("source"),
+    srcNote: document.getElementById("src-note"),
+    resNote: document.getElementById("res-note"),
+    scorecard: document.getElementById("scorecard"),
+    findings: document.getElementById("findings"),
+    modeAdf: document.getElementById("mode-adf"),
+    modeDax: document.getElementById("mode-dax"),
+    refBody: document.getElementById("ref-body")
+  };
+
+  var state = { mode: "adf", findings: [], mute: {}, meta: null, parseError: null };
+
+  function severityCounts(list) {
+    var c = { critical: 0, warning: 0, advisory: 0 };
+    list.forEach(function (f) { c[f.sev]++; });
+    return c;
+  }
+
+  function renderScorecard() {
+    if (state.parseError) {
+      els.scorecard.innerHTML =
+        '<div class="parse-error"><strong>Could not read the source</strong><span>' +
+        state.parseError + "</span></div>";
+      return;
+    }
+    if (!state.meta) {
+      els.scorecard.innerHTML = "";
+      return;
+    }
+
+    var c = severityCounts(state.findings);
+    var total = state.findings.length;
+    var unit = state.meta.unitCount + " " + state.meta.unit;
+
+    if (total === 0) {
+      els.scorecard.innerHTML =
+        '<div class="scorecard"><div class="verdict">' +
+        '<span class="verdict-figure" style="color:var(--sev-clean)">0</span>' +
+        '<span class="verdict-text">findings across <b>' + esc(unit) + "</b> — every rule in the catalog passed.</span>" +
+        '</div><div class="meter"><span class="m-clean" style="flex:1"></span></div></div>';
+      return;
+    }
+
+    var seg = ["critical", "warning", "advisory"].map(function (s) {
+      return c[s] ? '<span class="m-' + s + '" style="flex:' + c[s] + '"></span>' : "";
+    }).join("");
+
+    var chips = ["critical", "warning", "advisory"].map(function (s) {
+      if (!c[s]) return "";
+      var on = !state.mute[s];
+      return '<button class="chip" data-sev="' + s + '" aria-pressed="' + on + '">' +
+        '<span class="dot"></span>' + s + '<span class="n">' + c[s] + "</span></button>";
+    }).join("");
+
+    var lead = c.critical ? "critical" : (c.warning ? "warning" : "advisory");
+    var leadColor = "var(--sev-" + lead + ")";
+
+    els.scorecard.innerHTML =
+      '<div class="scorecard">' +
+        '<div class="verdict">' +
+          '<span class="verdict-figure" style="color:' + leadColor + '">' + total + "</span>" +
+          '<span class="verdict-text">' + (total === 1 ? "finding" : "findings") +
+            " across <b>" + esc(unit) + "</b> — " +
+            c.critical + " critical, " + c.warning + " warning, " + c.advisory + " advisory." +
+          "</span>" +
+        "</div>" +
+        '<div class="meter">' + seg + "</div>" +
+        '<div class="chips">' + chips + "</div>" +
+      "</div>";
+
+    Array.prototype.forEach.call(els.scorecard.querySelectorAll(".chip"), function (btn) {
+      btn.addEventListener("click", function () {
+        var s = btn.getAttribute("data-sev");
+        state.mute[s] = !state.mute[s];
+        renderScorecard();
+        renderFindings();
+      });
+    });
+  }
+
+  function renderFindings() {
+    if (state.parseError) { els.findings.innerHTML = ""; els.resNote.textContent = "—"; return; }
+    if (!state.meta) {
+      els.findings.innerHTML =
+        '<div class="empty"><p class="big">Nothing loaded</p>' +
+        "<p>Paste a pipeline definition or a set of measures, or load one of the samples.</p></div>";
+      els.resNote.textContent = "—";
+      return;
+    }
+
+    var visible = state.findings.filter(function (f) { return !state.mute[f.sev]; });
+    visible.sort(function (a, b) {
+      return (SEV_ORDER[a.sev] - SEV_ORDER[b.sev]) || a.id.localeCompare(b.id);
+    });
+
+    els.resNote.textContent = visible.length + " of " + state.findings.length + " shown";
+
+    if (!state.findings.length) {
+      els.findings.innerHTML =
+        '<div class="empty"><p class="big">Clean</p>' +
+        "<p>No rule in the catalog matched. That is not the same as correct — it means nothing this engine checks for is present.</p></div>";
+      return;
+    }
+    if (!visible.length) {
+      els.findings.innerHTML =
+        '<div class="empty"><p class="big">All severities hidden</p><p>Re-enable a severity above to see its findings.</p></div>';
+      return;
+    }
+
+    els.findings.innerHTML = visible.map(function (f) {
+      var d = DOCS[f.doc];
+      return '<article class="finding" data-sev="' + f.sev + '">' +
+        '<span class="stripe"></span>' +
+        '<div class="finding-body">' +
+          '<div class="finding-top">' +
+            '<span class="rule-id">' + f.id + "</span>" +
+            '<span class="sev-tag">' + f.sev + "</span>" +
+            '<span class="cat-tag">' + f.cat + "</span>" +
+          "</div>" +
+          "<h3>" + esc(f.title) + "</h3>" +
+          "<p>" + esc(f.detail) + "</p>" +
+          '<div class="evidence">' +
+            '<span class="loc">' + esc(f.loc) + "</span>" +
+            "<pre>" + esc(f.evidence) + "</pre>" +
+          "</div>" +
+          '<dl class="fix">' +
+            "<dt>Fix</dt><dd>" + f.fix + "</dd>" +
+            "<dt>Source</dt><dd><a href=\"" + d[1] + '" target="_blank" rel="noopener">' + esc(d[0]) + "</a></dd>" +
+          "</dl>" +
+        "</div>" +
+      "</article>";
+    }).join("");
+  }
+
+  function renderRefTable() {
+    var groups = [
+      ["Azure Data Factory", Object.keys(RULES).filter(function (k) { return k.indexOf("ADF") === 0; })],
+      ["Power BI DAX", Object.keys(RULES).filter(function (k) { return k.indexOf("DAX") === 0; })]
+    ];
+    var html = "";
+    groups.forEach(function (g, gi) {
+      html += '<tr' + (gi ? ' data-group="1"' : "") + '><td colspan="5"><span class="group-label">' + g[0] +
+        "</span> <span style=\"font-family:var(--mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.08em\">" +
+        g[1].length + " RULES</span></td></tr>";
+      g[1].forEach(function (k) {
+        var r = RULES[k], d = DOCS[r.doc];
+        html += "<tr>" +
+          '<td class="id">' + k + "</td>" +
+          '<td class="rule">' + esc(r.title) + "</td>" +
+          '<td><span class="sev-dot" data-sev="' + r.sev + '"><i></i>' + r.sev + "</span></td>" +
+          "<td>" + r.cat + "</td>" +
+          '<td><a href="' + d[1] + '" target="_blank" rel="noopener">' + esc(clip(d[0], 34)) + "</a></td>" +
+        "</tr>";
+      });
+    });
+    els.refBody.innerHTML = html;
+  }
+
+  /* =====================================================================
+     WIRING
+     ===================================================================== */
+
+  function updateSrcNote() {
+    var v = els.source.value;
+    var lines = v ? v.split("\n").length : 0;
+    els.srcNote.textContent = lines + (lines === 1 ? " line" : " lines");
+  }
+
+  function run() {
+    var text = els.source.value.trim();
+    state.parseError = null;
+    if (!text) {
+      state.meta = null;
+      state.findings = [];
+      renderScorecard();
+      renderFindings();
+      return;
+    }
+    var res = state.mode === "adf" ? auditADF(text) : auditDAX(text);
+    if (res.parseError) {
+      state.parseError = res.parseError;
+      state.meta = null;
+      state.findings = [];
+    } else {
+      state.findings = res.findings;
+      state.meta = res;
+    }
+    renderScorecard();
+    renderFindings();
+  }
+
+  function setMode(mode) {
+    state.mode = mode;
+    els.modeAdf.setAttribute("aria-selected", String(mode === "adf"));
+    els.modeDax.setAttribute("aria-selected", String(mode === "dax"));
+    els.source.setAttribute("placeholder", mode === "adf"
+      ? "Paste an Azure Data Factory pipeline JSON…"
+      : "Paste DAX measures, one per block:\n\nTotal Sales = SUM ( Sales[Amount] )");
+    load("defects");
+  }
+
+  function load(which) {
+    els.source.value = SAMPLES[state.mode][which];
+    updateSrcNote();
+    run();
+  }
+
+  els.modeAdf.addEventListener("click", function () { setMode("adf"); });
+  els.modeDax.addEventListener("click", function () { setMode("dax"); });
+  document.getElementById("load-sample").addEventListener("click", function () { load("defects"); });
+  document.getElementById("load-clean").addEventListener("click", function () { load("clean"); });
+  document.getElementById("run").addEventListener("click", run);
+  document.getElementById("clear").addEventListener("click", function () {
+    els.source.value = "";
+    updateSrcNote();
+    state.meta = null; state.findings = []; state.parseError = null;
+    renderScorecard(); renderFindings();
+  });
+  els.source.addEventListener("input", updateSrcNote);
+
+  renderRefTable();
+  setMode("adf");
+
+  /* Webfonts are loaded after first paint so a slow or blocked font host can
+     never leave the page blank; the fallback stacks carry the design until
+     (and if) they arrive. */
+  try {
+    var fl = document.createElement("link");
+    fl.rel = "stylesheet";
+    fl.href = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap";
+    document.head.appendChild(fl);
+  } catch (e) { /* fallback stacks are already in place */ }
+})();
+</script>
