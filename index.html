@@ -617,8 +617,8 @@
       </p>
     </div>
     <div class="plate-meta">
-      <div><b>31</b> rules</div>
-      <div><b>17</b> pipeline</div>
+      <div><b>33</b> rules</div>
+      <div><b>19</b> pipeline</div>
       <div><b>14</b> dax</div>
       <div>runs <b>in-browser</b></div>
     </div>
@@ -715,6 +715,8 @@
     cicd: ["CI/CD best practices for Data Factory", "https://learn.microsoft.com/azure/data-factory/continuous-integration-delivery"],
     security: ["Security considerations for data movement", "https://learn.microsoft.com/azure/data-factory/data-movement-security-considerations"],
     depends: ["Activity dependency — Succeeded, Failed, Skipped, Completed", "https://learn.microsoft.com/azure/data-factory/concepts-pipelines-activities#activity-dependency"],
+    precopy: ["Azure SQL sink — preCopyScript", "https://learn.microsoft.com/azure/data-factory/connector-azure-sql-database#copy-activity-properties"],
+    naming: ["Activity JSON — name should represent the action", "https://learn.microsoft.com/azure/data-factory/concepts-pipelines-activities#activity-json"],
     divide: ["DIVIDE function vs. divide operator", "https://learn.microsoft.com/dax/best-practices/dax-divide-function-operator"],
     errfn: ["Appropriate use of error functions", "https://learn.microsoft.com/dax/best-practices/dax-error-functions"],
     countrows: ["Use COUNTROWS instead of COUNT", "https://learn.microsoft.com/dax/best-practices/dax-countrows"],
@@ -743,6 +745,8 @@
     "ADF-015": { sev: "warning",  cat: "secrets",     title: "SQL text assembled by string concatenation", doc: "security" },
     "ADF-016": { sev: "advisory", cat: "governance",  title: "Pipeline has no folder or annotations", doc: "cicd" },
     "ADF-017": { sev: "critical", cat: "correctness", title: "\"Completed\" dependency masks upstream failure", doc: "depends" },
+    "ADF-018": { sev: "warning",  cat: "resilience",  title: "Destructive preCopyScript runs before the copy", doc: "precopy" },
+    "ADF-019": { sev: "advisory", cat: "governance",  title: "Activity still carries its default name", doc: "naming" },
 
     "DAX-001": { sev: "warning",  cat: "correctness", title: "Division by an expression without DIVIDE", doc: "divide" },
     "DAX-002": { sev: "warning",  cat: "performance", title: "IFERROR or ISERROR masks the defect",   doc: "errfn" },
@@ -788,6 +792,14 @@
   /* =====================================================================
      AZURE DATA FACTORY ANALYZER
      ===================================================================== */
+
+  /* Names ADF Studio assigns when an activity is dropped on the canvas:
+     the palette label with a counter appended, e.g. "Copy data1", "Lookup2". */
+  var DEFAULT_ACTIVITY_NAME = new RegExp(
+    "^(copy data|lookup|get ?metadata|foreach|for each|execute pipeline|executepipeline|" +
+    "stored procedure|sql server stored procedure|data ?flow|web|webhook|wait|set variable|" +
+    "append variable|filter|if condition|switch|until|validation|delete|fail|script|" +
+    "azure function|notebook|jar|python|spark|u-sql|custom|databricks)\\s?\\d+$", "i");
 
   var EXECUTION_TYPES = [
     "copy", "lookup", "getmetadata", "sqlserverstoredprocedure", "script",
@@ -973,6 +985,41 @@
             "This activity carries a credential field, and activity input and output are written to the monitoring store unless marked secure. The credential becomes readable to anyone with run-history access.",
             "Set <code>policy.secureInput</code> and <code>policy.secureOutput</code> to <code>true</code>."));
         }
+      }
+
+      /* ADF-018 — a destructive pre-copy script runs before the transfer, in no
+         transaction. If the copy then fails, the table is left in the emptied
+         state with nothing to roll it back. */
+      if (type === "copy") {
+        var sinkTp = (act.typeProperties && act.typeProperties.sink) || {};
+        var pcs = sinkTp.preCopyScript;
+        if (typeof pcs === "string" && pcs.trim()) {
+          var destructive = pcs.match(/\b(truncate\s+table|drop\s+table|delete\s+from)\b/i);
+          if (destructive) {
+            var verb = destructive[1].toLowerCase().replace(/\s+/g, " ");
+            var bounded = /\bdelete\s+from\b/i.test(verb) && /\bwhere\b/i.test(pcs);
+            out.push(finding("ADF-018",
+              path + ".typeProperties.sink.preCopyScript — \"" + label + "\"",
+              '"preCopyScript": ' + JSON.stringify(clip(pcs.trim(), 70)),
+              "This runs " + verb.toUpperCase() + " against the sink before any rows are written, once per copy run, " +
+                "and the service wraps no transaction around the two. If the transfer fails after it — a source " +
+                "timeout, a schema mismatch, a throttled connection — the target is left " +
+                (bounded ? "with the deleted rows gone and no replacements written." : "empty until someone reruns the pipeline successfully.") +
+                " Any report reading the table in that window sees the gap, not an error.",
+              "Load into a staging table and swap it in, or move the cleanup and the insert into one stored procedure that owns a transaction."));
+          }
+        }
+      }
+
+      /* ADF-019 — an activity left with the name Studio gave it */
+      if (typeof act.name === "string" && DEFAULT_ACTIVITY_NAME.test(act.name.trim())) {
+        out.push(finding("ADF-019",
+          path + " — \"" + label + "\"",
+          '"name": ' + JSON.stringify(act.name),
+          "The activity still carries the name ADF Studio generated when it was dropped on the canvas. " +
+            "The documentation asks for a name that represents the action the activity performs; a counter " +
+            "does not, and it is the name that appears in run history, error messages and dependency references.",
+          "Rename it after what the step does, e.g. <code>Copy_Referrals_To_Bronze</code>."));
       }
 
       /* ForEach rules */
