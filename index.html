@@ -708,7 +708,7 @@
      ===================================================================== */
 
   var DOCS = {
-    policy: ["Activity policy (retry, timeout, secureInput/secureOutput)", "https://learn.microsoft.com/dotnet/api/microsoft.azure.management.datafactory.models.activitypolicy?view=azure-dotnet"],
+    policy: ["Activity JSON — policy, retry, timeout defaults", "https://learn.microsoft.com/azure/data-factory/concepts-pipelines-activities#activity-json"],
     keyvault: ["Store credentials in Azure Key Vault", "https://learn.microsoft.com/azure/data-factory/store-credentials-in-key-vault"],
     foreach: ["ForEach activity — limits and workarounds", "https://learn.microsoft.com/azure/data-factory/control-flow-for-each-activity"],
     lookup: ["Lookup activity — supported capabilities", "https://learn.microsoft.com/azure/data-factory/control-flow-lookup-activity"],
@@ -801,6 +801,16 @@
   function looksLikeExpression(v) {
     return typeof v === "string" && (/^@/.test(v.trim()) || /@\{/.test(v));
   }
+  /* ADF timespan "[d.]hh:mm:ss" as hours, or null when it is not a literal timespan. */
+  function timeoutHours(v) {
+    if (typeof v !== "string") return null;
+    var m = v.trim().match(/^(?:(\d+)\.)?(\d{1,2}):([0-5]\d):([0-5]\d)$/);
+    if (!m) return null;
+    return (+(m[1] || 0)) * 24 + (+m[2]) + (+m[3]) / 60 + (+m[4]) / 3600;
+  }
+  var ADF_DEFAULT_TIMEOUT_HOURS = 12;   /* since August 2022 */
+  var ADF_LEGACY_TIMEOUT_HOURS = 168;   /* the 7 days it replaced */
+
   function looksLikePlaceholder(v) {
     return typeof v === "string" && (v === "" || /^<.*>$/.test(v.trim()) || /^\*+$/.test(v.trim()));
   }
@@ -923,12 +933,30 @@
             "Retry defaults to 0. A transient fault — a throttled storage call, a dropped SQL connection — fails the activity and the pipeline run on the first attempt.",
             "Set <code>policy.retry</code> to a small count with <code>retryIntervalInSeconds</code> (default 30)."));
         }
-        if (pol.timeout === undefined || pol.timeout === null || pol.timeout === "") {
+        /* ADF-002 — a timeout that is absent, or written out at its default value,
+           is not an override. ADF Studio always emits "0.12:00:00", so a presence
+           check never fires on studio-authored JSON and the rule reported nothing
+           while nothing had in fact been set. */
+        var to = pol.timeout;
+        var why = null;
+        if (to === undefined || to === null || to === "") {
+          why = { ev: "(no policy.timeout)", how: "is absent, so the activity inherits the 12-hour default" };
+        } else if (!looksLikeExpression(to)) {
+          var hrs = timeoutHours(to);
+          if (hrs === ADF_DEFAULT_TIMEOUT_HOURS) {
+            why = { ev: '"timeout": ' + JSON.stringify(to), how: "is the 12-hour default written out, not a considered ceiling" };
+          } else if (hrs === ADF_LEGACY_TIMEOUT_HOURS) {
+            why = { ev: '"timeout": ' + JSON.stringify(to), how: "is the legacy 7-day default, which Data Factory replaced with 12 hours in August 2022" };
+          }
+        }
+        if (why) {
           out.push(finding("ADF-002",
             path + ".policy — \"" + label + "\"",
-            "(no policy.timeout)",
-            "Activity timeout defaults to 7 days. A hung activity holds the pipeline, its integration runtime slot and any downstream schedule for a week before it gives up.",
-            'Set <code>policy.timeout</code> to the real ceiling for this step, e.g. <code>"0.02:00:00"</code>.'));
+            why.ev,
+            "The timeout " + why.how + ". A hung activity holds the pipeline, its integration runtime slot and " +
+              "any downstream schedule for that long before it gives up. A deliberate choice of exactly the default " +
+              "is indistinguishable from never having set one, so this reports the value rather than the intent.",
+            'Set <code>policy.timeout</code> to the real ceiling for this step, e.g. <code>"0.02:00:00"</code> (minimum 10 minutes).'));
         }
       }
 

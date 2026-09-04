@@ -47,7 +47,7 @@ robustness, governance).
 | ID | Severity | Category | Rule |
 |----|----------|----------|------|
 | ADF-001 | warning | resilience | Activity has no retry policy |
-| ADF-002 | warning | resilience | Activity has no timeout override |
+| ADF-002 | warning | resilience | Activity has no timeout override (absent, or left at the default) |
 | ADF-003 | critical | secrets | Secret stored as a literal value |
 | ADF-004 | critical | correctness | Variable written inside a parallel ForEach |
 | ADF-005 | critical | correctness | ForEach batchCount above the documented maximum |
